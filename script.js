@@ -1,111 +1,103 @@
-const botao = document.getElementById("btnLigar");
 const video = document.getElementById("videoEscola");
 const container = document.getElementById("containerVideo");
 const painelStatus = document.getElementById("statusCatraca");
 const corpoTabela = document.getElementById("corpoTabela");
+const btnLigar = document.getElementById("btnLigar");
+const btnReset = document.getElementById("btnReset");
 
 let comparadorDeRostos; 
 let catracaLiberada = true; 
+const alunosQueJaComeram = new Set(); // Nossa lista de controle
 
-// --- NOVO: LISTA DE ALUNOS QUE JÁ CONFIRMARAM ---
-const alunosQueJaComeram = new Set(); 
-
+// Adicione aqui os nomes das fotos cadastradas
 const LISTA_ALUNOS = ["Kaio"]; 
 
-function tocarBipe() {
-    const contextoAudio = new (window.AudioContext || window.webkitAudioContext)();
-    const oscilador = contextoAudio.createOscillator();
-    oscilador.type = 'sine';
-    oscilador.frequency.setValueAtTime(880, contextoAudio.currentTime);
-    oscilador.connect(contextoAudio.destination);
-    oscilador.start();
-    oscilador.stop(contextoAudio.currentTime + 0.2); 
+// Função de Bipe
+function tocarBipe(tipo) {
+    const contexto = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = contexto.createOscillator();
+    osc.type = 'sine';
+    // Se for sucesso, som agudo. Se já comeu, som grave.
+    osc.frequency.setValueAtTime(tipo === 'erro' ? 220 : 880, contexto.currentTime);
+    osc.connect(contexto.destination);
+    osc.start();
+    osc.stop(contexto.currentTime + 0.2);
 }
 
-function registrarNoHistorico(nome) {
-    const hora = new Date().toLocaleTimeString('pt-BR');
-    const novaLinha = document.createElement("tr");
-    novaLinha.innerHTML = `
-        <td><strong>${nome}</strong></td>
-        <td>${hora}</td>
-        <td><span class="tag-sucesso">CONFIRMADO</span></td>
-    `;
-    corpoTabela.insertBefore(novaLinha, corpoTabela.firstChild);
+// Inicializar IA
+async function iniciarIA() {
+    const URL_MODELOS = 'https://vladmandic.github.io/face-api/model/';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(URL_MODELOS);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(URL_MODELOS);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(URL_MODELOS);
+
+    const descritores = await Promise.all(LISTA_ALUNOS.map(async nome => {
+        const img = document.getElementById(nome);
+        const detec = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+        return new faceapi.LabeledFaceDescriptors(nome, [detec.descriptor]);
+    }));
+
+    comparadorDeRostos = new faceapi.FaceMatcher(descritores, 0.45);
+    painelStatus.innerText = "SISTEMA PRONTO";
 }
 
-async function carregarSistema() {
-    const urlModelos = 'https://vladmandic.github.io/face-api/model/';
-    await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(urlModelos),
-        faceapi.nets.faceLandmark68Net.loadFromUri(urlModelos),
-        faceapi.nets.faceRecognitionNet.loadFromUri(urlModelos)
-    ]);
+iniciarIA();
 
-    try {
-        const descritoresPromessas = LISTA_ALUNOS.map(async nome => {
-            const img = document.getElementById(nome);
-            const deteccao = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-            return new faceapi.LabeledFaceDescriptors(nome, [deteccao.descriptor]);
-        });
-
-        const listaDeRostosCadastrados = await Promise.all(descritoresPromessas);
-        comparadorDeRostos = new faceapi.FaceMatcher(listaDeRostosCadastrados, 0.45); 
-        
-        painelStatus.innerText = "SISTEMA PRONTO";
-    } catch (erro) {
-        alert("Erro ao carregar fotos.");
-    }
-}
-
-carregarSistema();
-
-botao.addEventListener("click", async () => {
+// Ligar Câmera
+btnLigar.addEventListener("click", async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     video.srcObject = stream;
+});
+
+// Resetar Lista
+btnReset.addEventListener("click", () => {
+    alunosQueJaComeram.clear();
+    corpoTabela.innerHTML = "";
+    alert("Lista de refeições zerada!");
 });
 
 video.addEventListener("play", () => {
     const canvas = faceapi.createCanvasFromMedia(video);
     container.append(canvas);
-    const tamanho = { width: video.width, height: video.height };
-    faceapi.matchDimensions(canvas, tamanho);
+    const displaySize = { width: video.width, height: video.height };
+    faceapi.matchDimensions(canvas, displaySize);
 
     setInterval(async () => {
-        if (!comparadorDeRostos) return; 
-
-        const rostosWebcam = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+        const resized = faceapi.resizeResults(detections, displaySize);
         canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-        const rostosAjustados = faceapi.resizeResults(rostosWebcam, tamanho);
-        const resultados = rostosAjustados.map(rosto => comparadorDeRostos.findBestMatch(rosto.descriptor));
 
-        resultados.forEach((resultado, i) => {
-            const caixa = rostosAjustados[i].detection.box;
-            new faceapi.draw.DrawBox(caixa, { label: resultado.toString() }).draw(canvas);
+        resized.forEach(det => {
+            const result = comparadorDeRostos.findBestMatch(det.descriptor);
+            const label = result.toString();
+            new faceapi.draw.DrawBox(det.detection.box, { label }).draw(canvas);
 
-            if (resultado.label !== "unknown" && catracaLiberada) {
+            if (result.label !== "unknown" && catracaLiberada) {
                 
-                // --- VERIFICAÇÃO DE DUPLICIDADE ---
-                if (alunosQueJaComeram.has(resultado.label)) {
-                    // Se o aluno já confirmou antes:
-                    painelStatus.className = "status bloqueado"; // Fica laranja ou vermelho
-                    painelStatus.style.backgroundColor = "#ff9800"; // Cor de alerta (Laranja)
-                    painelStatus.innerText = "REFEIÇÃO JÁ REGISTRADA: " + resultado.label.toUpperCase();
+                if (alunosQueJaComeram.has(result.label)) {
+                    // JÁ COMEU
+                    painelStatus.className = "status alerta";
+                    painelStatus.innerText = "REFEIÇÃO JÁ REGISTRADA: " + result.label.toUpperCase();
+                    tocarBipe('erro');
                 } else {
-                    // Se é a primeira vez do aluno:
+                    // LIBERADO PRIMEIRA VEZ
                     catracaLiberada = false;
-                    alunosQueJaComeram.add(resultado.label); // Adiciona na lista de confirmados
+                    alunosQueJaComeram.add(result.label);
                     
                     painelStatus.className = "status liberado";
-                    painelStatus.style.backgroundColor = "#34a853";
-                    painelStatus.innerText = "BOM APETITE, " + resultado.label.toUpperCase();
+                    painelStatus.innerText = "BOM APETITE, " + result.label.toUpperCase();
                     
-                    tocarBipe();
-                    registrarNoHistorico(resultado.label);
+                    tocarBipe('sucesso');
+                    
+                    // Adiciona na tabela
+                    const row = `<tr><td><strong>${result.label}</strong></td><td>${new Date().toLocaleTimeString()}</td><td><span class="tag-sucesso">CONFIRMADO</span></td></tr>`;
+                    corpoTabela.innerHTML = row + corpoTabela.innerHTML;
 
                     setTimeout(() => {
                         catracaLiberada = true;
-                        painelStatus.style.backgroundColor = ""; // Volta ao CSS original
-                    }, 4000);
+                        painelStatus.className = "status bloqueado";
+                        painelStatus.innerText = "AGUARDANDO PRÓXIMO...";
+                    }, 5000);
                 }
             }
         });
