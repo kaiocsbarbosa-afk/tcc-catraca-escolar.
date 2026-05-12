@@ -18,6 +18,11 @@
 </head>
 <body>
     <h1>Sistema de Acesso Escolar</h1>
+    
+    <div id="statusCatraca" style="background-color: red; color: white; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 10px;">
+        CATRACA BLOQUEADA
+    </div>
+
     <button id="btnLigar">Ligar Câmera</button>
     <br>
     
@@ -25,7 +30,7 @@
         <video id="videoEscola" autoplay muted width="640" height="480" style="border: 2px solid black;"></video>
     </div>
 
-    <img id="fotoAluno" src="aluno.jpg" style="display: none;">
+    <img id="fotoAluno" src="aluno.jpg" width="500" height="500" style="position: absolute; top: -9999px;">
 
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
     
@@ -50,7 +55,7 @@
             console.log("Estudando a foto do aluno...");
             
             try {
-                // A IA analisa a foto Base64
+                // A IA analisa a foto
                 const deteccaoFoto = await faceapi.detectSingleFace(imgAluno, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                 
                 if (!deteccaoFoto) {
@@ -58,7 +63,7 @@
                     return;
                 }
 
-                // CADASTRA O ROSTO (Lembre de colocar seu nome aqui se quiser)
+                // CADASTRA O ROSTO
                 const cadastroAluno = new faceapi.LabeledFaceDescriptors("Aluno Autenticado", [deteccaoFoto.descriptor]);
                 comparadorDeRostos = new faceapi.FaceMatcher([cadastroAluno], 0.6);
                 
@@ -70,7 +75,7 @@
 
         carregarSistema();
 
-        // 2. FUNÇÃO DO BOTÃO LIGAR CÂMERA (A que havia sumido!)
+        // 2. FUNÇÃO DO BOTÃO LIGAR CÂMERA
         botao.addEventListener("click", async function() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
