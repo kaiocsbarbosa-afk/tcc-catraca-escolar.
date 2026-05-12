@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Acesso - TCC</title>
+    <title>Controle de Merenda - IA</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     
     <div class="painel-principal">
         <header>
-            <h1>Controle de Acesso Escolar</h1>
-            <p>Monitoramento em Tempo Real</p>
+            <h1>Sistema de Merenda Escolar</h1>
+            <p>Reconhecimento Facial Integrado</p>
         </header>
 
         <div id="statusCatraca" class="status bloqueado">
-            AGUARDANDO INICIALIZAÇÃO...
+            INICIALIZANDO IA...
         </div>
 
         <div class="controles">
-            <button id="btnLigar">Ligar Câmera</button>
+            <button id="btnLigar" class="btn-primario">Ligar Câmera</button>
+            <button id="btnReset" class="btn-secundario">Zerar Lista do Dia</button>
         </div>
         
         <div id="containerVideo">
@@ -27,7 +28,7 @@
         </div>
 
         <div class="historico-container">
-            <h3>Histórico de Entradas</h3>
+            <h3>Alunos que já comeram hoje</h3>
             <table id="tabelaHistorico">
                 <thead>
                     <tr>
@@ -42,7 +43,7 @@
         </div>
 
         <div id="fotosBiblioteca" style="display: none;">
-            <img id="Kaio" src="aluno.jpg"> 
+            <img id="Kaio" src="aluno.jpg">
             </div>
     </div>
 
