@@ -1,11 +1,16 @@
 const botao = document.getElementById("btnLigar");
 const video = document.getElementById("videoEscola");
 const container = document.getElementById("containerVideo");
-const imgAluno = document.getElementById("fotoAluno");
 const painelStatus = document.getElementById("statusCatraca");
+const corpoTabela = document.getElementById("corpoTabela");
 
 let comparadorDeRostos; 
 let catracaLiberada = true; 
+
+// --- NOVO: LISTA DE ALUNOS QUE JÁ CONFIRMARAM ---
+const alunosQueJaComeram = new Set(); 
+
+const LISTA_ALUNOS = ["Kaio"]; 
 
 function tocarBipe() {
     const contextoAudio = new (window.AudioContext || window.webkitAudioContext)();
@@ -17,6 +22,17 @@ function tocarBipe() {
     oscilador.stop(contextoAudio.currentTime + 0.2); 
 }
 
+function registrarNoHistorico(nome) {
+    const hora = new Date().toLocaleTimeString('pt-BR');
+    const novaLinha = document.createElement("tr");
+    novaLinha.innerHTML = `
+        <td><strong>${nome}</strong></td>
+        <td>${hora}</td>
+        <td><span class="tag-sucesso">CONFIRMADO</span></td>
+    `;
+    corpoTabela.insertBefore(novaLinha, corpoTabela.firstChild);
+}
+
 async function carregarSistema() {
     const urlModelos = 'https://vladmandic.github.io/face-api/model/';
     await Promise.all([
@@ -26,28 +42,26 @@ async function carregarSistema() {
     ]);
 
     try {
-        const deteccaoFoto = await faceapi.detectSingleFace(imgAluno, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-        
-        if (!deteccaoFoto) return alert("A IA não achou um rosto na foto.");
+        const descritoresPromessas = LISTA_ALUNOS.map(async nome => {
+            const img = document.getElementById(nome);
+            const deteccao = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+            return new faceapi.LabeledFaceDescriptors(nome, [deteccao.descriptor]);
+        });
 
-        const cadastroAluno = new faceapi.LabeledFaceDescriptors("Aluno", [deteccaoFoto.descriptor]);
-        comparadorDeRostos = new faceapi.FaceMatcher([cadastroAluno], 0.45); 
+        const listaDeRostosCadastrados = await Promise.all(descritoresPromessas);
+        comparadorDeRostos = new faceapi.FaceMatcher(listaDeRostosCadastrados, 0.45); 
         
-        alert("Sistema pronto! Pode ligar a câmera.");
+        painelStatus.innerText = "SISTEMA PRONTO";
     } catch (erro) {
-        console.error("Erro na leitura da foto: ", erro);
+        alert("Erro ao carregar fotos.");
     }
 }
 
 carregarSistema();
 
-botao.addEventListener("click", async function() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-    } catch (erro) {
-        alert("Erro ao ligar a câmera.");
-    }
+botao.addEventListener("click", async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
 });
 
 video.addEventListener("play", () => {
@@ -60,42 +74,40 @@ video.addEventListener("play", () => {
         if (!comparadorDeRostos) return; 
 
         const rostosWebcam = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
-        
         canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
         const rostosAjustados = faceapi.resizeResults(rostosWebcam, tamanho);
-        
         const resultados = rostosAjustados.map(rosto => comparadorDeRostos.findBestMatch(rosto.descriptor));
-
-        let alunoReconhecido = false;
 
         resultados.forEach((resultado, i) => {
             const caixa = rostosAjustados[i].detection.box;
-            const texto = new faceapi.draw.DrawBox(caixa, { label: resultado.toString() });
-            texto.draw(canvas);
+            new faceapi.draw.DrawBox(caixa, { label: resultado.toString() }).draw(canvas);
 
-            if (resultado.label !== "unknown") {
-                alunoReconhecido = true;
+            if (resultado.label !== "unknown" && catracaLiberada) {
+                
+                // --- VERIFICAÇÃO DE DUPLICIDADE ---
+                if (alunosQueJaComeram.has(resultado.label)) {
+                    // Se o aluno já confirmou antes:
+                    painelStatus.className = "status bloqueado"; // Fica laranja ou vermelho
+                    painelStatus.style.backgroundColor = "#ff9800"; // Cor de alerta (Laranja)
+                    painelStatus.innerText = "REFEIÇÃO JÁ REGISTRADA: " + resultado.label.toUpperCase();
+                } else {
+                    // Se é a primeira vez do aluno:
+                    catracaLiberada = false;
+                    alunosQueJaComeram.add(resultado.label); // Adiciona na lista de confirmados
+                    
+                    painelStatus.className = "status liberado";
+                    painelStatus.style.backgroundColor = "#34a853";
+                    painelStatus.innerText = "BOM APETITE, " + resultado.label.toUpperCase();
+                    
+                    tocarBipe();
+                    registrarNoHistorico(resultado.label);
+
+                    setTimeout(() => {
+                        catracaLiberada = true;
+                        painelStatus.style.backgroundColor = ""; // Volta ao CSS original
+                    }, 4000);
+                }
             }
         });
-
-        if (alunoReconhecido && catracaLiberada && painelStatus) {
-            catracaLiberada = false; 
-            const horaAtual = new Date().toLocaleTimeString('pt-BR'); 
-            
-            // Agora manipulamos as classes do CSS em vez do style direto
-            painelStatus.className = "status liberado";
-            painelStatus.innerText = "ACESSO LIBERADO: " + horaAtual;
-            
-            tocarBipe(); 
-
-            setTimeout(() => {
-                catracaLiberada = true;
-            }, 3000);
-
-        } else if (!alunoReconhecido && catracaLiberada && painelStatus) {
-            painelStatus.className = "status bloqueado";
-            painelStatus.innerText = "CATRACA BLOQUEADA";
-        }
-
     }, 100);
 });
