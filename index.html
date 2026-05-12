@@ -34,10 +34,11 @@
         const video = document.getElementById("videoEscola");
         const container = document.getElementById("containerVideo");
         const imgAluno = document.getElementById("fotoAluno");
-        
-        let comparadorDeRostos; // Variável para guardar a memória do seu rosto
+        const painelStatus = document.getElementById("statusCatraca");
 
-        // 2. Função para baixar a IA e "estudar" a foto da matrícula
+        let comparadorDeRostos; // Nossa memória do rosto
+
+        // 1. Carrega a IA e estuda a foto
         async function carregarSistema() {
             const urlModelos = 'https://vladmandic.github.io/face-api/model/';
             await Promise.all([
@@ -47,61 +48,60 @@
             ]);
 
             console.log("Estudando a foto do aluno...");
-            // A IA analisa a foto escondida e extrai os 128 números
-            const deteccaoFoto = await faceapi.detectSingleFace(imgAluno, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
             
-            if (!deteccaoFoto) {
-                alert("Erro: A IA não achou um rosto na foto aluno.jpg. Tente uma foto mais clara.");
-                return;
-            }
+            try {
+                // A IA analisa a foto Base64
+                const deteccaoFoto = await faceapi.detectSingleFace(imgAluno, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                
+                if (!deteccaoFoto) {
+                    alert("A IA não achou um rosto na foto. A câmera não vai reconhecer ninguém.");
+                    return;
+                }
 
-            // 3. Cadastra o rosto com um nome (MUDE PARA O SEU NOME AQUI)
-            const cadastroAluno = new faceapi.LabeledFaceDescriptors("Kaio", [deteccaoFoto.descriptor]);
-            
-            // Cria o "Avaliador" que exige 60% (0.6) de semelhança para liberar a catraca
-            comparadorDeRostos = new faceapi.FaceMatcher([cadastroAluno], 0.6);
-            
-            alert("Sistema pronto! IA carregada e rosto cadastrado.");
+                // CADASTRA O ROSTO (Lembre de colocar seu nome aqui se quiser)
+                const cadastroAluno = new faceapi.LabeledFaceDescriptors("Aluno Autenticado", [deteccaoFoto.descriptor]);
+                comparadorDeRostos = new faceapi.FaceMatcher([cadastroAluno], 0.6);
+                
+                alert("Sistema pronto! Pode ligar a câmera.");
+            } catch (erro) {
+                console.error("Erro na leitura da foto: ", erro);
+            }
         }
 
         carregarSistema();
 
-        // 4. Liga a câmera
+        // 2. FUNÇÃO DO BOTÃO LIGAR CÂMERA (A que havia sumido!)
         botao.addEventListener("click", async function() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
             } catch (erro) {
                 console.error("Erro ao acessar a câmera: ", erro);
+                alert("Erro ao ligar a câmera. Verifique as permissões do navegador.");
             }
         });
 
-        // 5. A comparação em tempo real
-        // 5. A comparação em tempo real
+        // 3. A Lógica de Comparação
         video.addEventListener("play", () => {
             const canvas = faceapi.createCanvasFromMedia(video);
             container.append(canvas);
             const tamanho = { width: video.width, height: video.height };
-            faceapi.matchDimensions(canvas, canvas);
+            faceapi.matchDimensions(canvas, tamanho);
 
             setInterval(async () => {
                 
-                // --- A SUPER TRAVA DE SEGURANÇA ---
-                // Se a IA ainda não estudou a foto base64, o vídeo não tenta procurar!
-                if (comparadorDeRostos === undefined) {
+                // TRAVA DE SEGURANÇA: Se não tem memória, não procura!
+                if (!comparadorDeRostos) {
                     return; 
                 }
-                // ----------------------------------
 
                 const rostosWebcam = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
                 
                 canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
                 const rostosAjustados = faceapi.resizeResults(rostosWebcam, tamanho);
                 
-                // Agora é seguro comparar!
                 const resultados = rostosAjustados.map(rosto => comparadorDeRostos.findBestMatch(rosto.descriptor));
 
-                const painelStatus = document.getElementById("statusCatraca");
                 let alunoReconhecido = false;
 
                 resultados.forEach((resultado, i) => {
