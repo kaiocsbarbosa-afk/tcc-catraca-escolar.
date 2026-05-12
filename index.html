@@ -64,7 +64,7 @@
 
                 // CADASTRA O ROSTO
                 const cadastroAluno = new faceapi.LabeledFaceDescriptors("Aluno Autenticado", [deteccaoFoto.descriptor]);
-                comparadorDeRostos = new faceapi.FaceMatcher([cadastroAluno], 0.6);
+                comparadorDeRostos = new faceapi.FaceMatcher([cadastroAluno], 0.45);
                 
                 alert("Sistema pronto! Pode ligar a câmera.");
             } catch (erro) {
