@@ -77,37 +77,51 @@
         });
 
         // 5. A comparação em tempo real
+        // 5. A comparação em tempo real
         video.addEventListener("play", () => {
             const canvas = faceapi.createCanvasFromMedia(video);
             container.append(canvas);
             const tamanho = { width: video.width, height: video.height };
-            faceapi.matchDimensions(canvas, tamanho);
+            faceapi.matchDimensions(canvas, canvas);
 
             setInterval(async () => {
-                setInterval(async () => {
                 
-                // --- NOVA TRAVA DE SEGURANÇA ---
-                if (!comparadorDeRostos) {
-                    return; // Ignora este quadro do vídeo se a memória estiver vazia
+                // --- A SUPER TRAVA DE SEGURANÇA ---
+                // Se a IA ainda não estudou a foto base64, o vídeo não tenta procurar!
+                if (comparadorDeRostos === undefined) {
+                    return; 
                 }
-                // -------------------------------
+                // ----------------------------------
 
-                const rostosWebcam = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
-                // AGORA PEDIMOS O DESCRITOR TAMBÉM (withFaceDescriptors)
                 const rostosWebcam = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
                 
                 canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
                 const rostosAjustados = faceapi.resizeResults(rostosWebcam, tamanho);
                 
-                // Para cada rosto que aparecer na webcam, compara com a foto guardada
+                // Agora é seguro comparar!
                 const resultados = rostosAjustados.map(rosto => comparadorDeRostos.findBestMatch(rosto.descriptor));
 
-                // Desenha a caixa azul e escreve o nome da pessoa
+                const painelStatus = document.getElementById("statusCatraca");
+                let alunoReconhecido = false;
+
                 resultados.forEach((resultado, i) => {
                     const caixa = rostosAjustados[i].detection.box;
                     const texto = new faceapi.draw.DrawBox(caixa, { label: resultado.toString() });
                     texto.draw(canvas);
+
+                    if (resultado.label !== "unknown") {
+                        alunoReconhecido = true;
+                        if(painelStatus) {
+                            painelStatus.style.backgroundColor = "green";
+                            painelStatus.innerText = "ACESSO LIBERADO: " + resultado.label.toUpperCase();
+                        }
+                    }
                 });
+
+                if (alunoReconhecido === false && painelStatus) {
+                    painelStatus.style.backgroundColor = "red";
+                    painelStatus.innerText = "CATRACA BLOQUEADA";
+                }
 
             }, 100);
         });
