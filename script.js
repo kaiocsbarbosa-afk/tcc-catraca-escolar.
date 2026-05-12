@@ -4,27 +4,50 @@ const painelStatus = document.getElementById("statusCatraca");
 const corpoTabela = document.getElementById("corpoTabela");
 const btnLigar = document.getElementById("btnLigar");
 const btnReset = document.getElementById("btnReset");
+const btnExportar = document.getElementById("btnExportar");
+
+// Botões de escolha de refeição
+const btnCafe = document.getElementById("btnCafe");
+const btnAlmoco = document.getElementById("btnAlmoco");
+const btnAmbos = document.getElementById("btnAmbos");
 
 let comparadorDeRostos; 
 let catracaLiberada = true; 
-const alunosQueJaComeram = new Set(); // Nossa lista de controle
-
-// Adicione aqui os nomes das fotos cadastradas
+const alunosQueJaComeram = new Set(); 
 const LISTA_ALUNOS = ["Kaio"]; 
 
-// Função de Bipe
+// Variável que guarda o que o aluno escolheu
+let refeicaoSelecionada = "";
+
+// Função para marcar o botão clicado
+function selecionarOpcao(escolha, botaoClicado) {
+    refeicaoSelecionada = escolha;
+    
+    // Tira a marcação de todos
+    btnCafe.classList.remove("ativo");
+    btnAlmoco.classList.remove("ativo");
+    btnAmbos.classList.remove("ativo");
+    
+    // Marca só o que foi clicado
+    botaoClicado.classList.add("ativo");
+    painelStatus.innerText = "OPÇÃO SELECIONADA! OLHE PARA A CÂMERA.";
+    painelStatus.className = "status alerta";
+}
+
+btnCafe.addEventListener("click", () => selecionarOpcao("Café", btnCafe));
+btnAlmoco.addEventListener("click", () => selecionarOpcao("Almoço", btnAlmoco));
+btnAmbos.addEventListener("click", () => selecionarOpcao("Café e Almoço", btnAmbos));
+
 function tocarBipe(tipo) {
     const contexto = new (window.AudioContext || window.webkitAudioContext)();
     const osc = contexto.createOscillator();
     osc.type = 'sine';
-    // Se for sucesso, som agudo. Se já comeu, som grave.
     osc.frequency.setValueAtTime(tipo === 'erro' ? 220 : 880, contexto.currentTime);
     osc.connect(contexto.destination);
     osc.start();
     osc.stop(contexto.currentTime + 0.2);
 }
 
-// Inicializar IA
 async function iniciarIA() {
     const URL_MODELOS = 'https://vladmandic.github.io/face-api/model/';
     await faceapi.nets.tinyFaceDetector.loadFromUri(URL_MODELOS);
@@ -38,22 +61,40 @@ async function iniciarIA() {
     }));
 
     comparadorDeRostos = new faceapi.FaceMatcher(descritores, 0.45);
-    painelStatus.innerText = "SISTEMA PRONTO";
+    painelStatus.innerText = "SISTEMA PRONTO. ESCOLHA UMA OPÇÃO.";
 }
 
 iniciarIA();
 
-// Ligar Câmera
 btnLigar.addEventListener("click", async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     video.srcObject = stream;
 });
 
-// Resetar Lista
 btnReset.addEventListener("click", () => {
     alunosQueJaComeram.clear();
     corpoTabela.innerHTML = "";
-    alert("Lista de refeições zerada!");
+    refeicaoSelecionada = "";
+    btnCafe.classList.remove("ativo");
+    btnAlmoco.classList.remove("ativo");
+    btnAmbos.classList.remove("ativo");
+    alert("Lista zerada para o próximo turno!");
+});
+
+// Atualizei a exportação para incluir a coluna de Refeição
+btnExportar.addEventListener("click", () => {
+    if (alunosQueJaComeram.size === 0) return alert("Nenhum aluno registrou refeição.");
+    let csv = "Nome,Refeicao,Horario,Status\n";
+    const linhas = corpoTabela.querySelectorAll("tr");
+    linhas.forEach(linha => {
+        const col = linha.querySelectorAll("td");
+        csv += `${col[0].innerText},${col[1].innerText},${col[2].innerText},${col[3].innerText}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = window.URL.createObjectURL(blob);
+    link.download = `Relatorio_Merenda_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`;
+    link.click();
 });
 
 video.addEventListener("play", () => {
@@ -69,35 +110,49 @@ video.addEventListener("play", () => {
 
         resized.forEach(det => {
             const result = comparadorDeRostos.findBestMatch(det.descriptor);
-            const label = result.toString();
-            new faceapi.draw.DrawBox(det.detection.box, { label }).draw(canvas);
+            new faceapi.draw.DrawBox(det.detection.box, { label: result.toString() }).draw(canvas);
 
             if (result.label !== "unknown" && catracaLiberada) {
                 
+                // O SISTEMA SÓ AVANÇA SE O ALUNO TIVER ESCOLHIDO A REFEIÇÃO
+                if (refeicaoSelecionada === "") {
+                    painelStatus.className = "status bloqueado";
+                    painelStatus.innerText = "CLIQUE NA REFEIÇÃO PRIMEIRO!";
+                    return; 
+                }
+
                 if (alunosQueJaComeram.has(result.label)) {
-                    // JÁ COMEU
                     painelStatus.className = "status alerta";
-                    painelStatus.innerText = "REFEIÇÃO JÁ REGISTRADA: " + result.label.toUpperCase();
+                    painelStatus.innerText = `REFEIÇÃO JÁ REGISTRADA: ${result.label.toUpperCase()}`;
                     tocarBipe('erro');
                 } else {
-                    // LIBERADO PRIMEIRA VEZ
                     catracaLiberada = false;
                     alunosQueJaComeram.add(result.label);
                     
                     painelStatus.className = "status liberado";
-                    painelStatus.innerText = "BOM APETITE, " + result.label.toUpperCase();
-                    
+                    painelStatus.innerText = `CONFIRMADO: ${result.label.toUpperCase()} (${refeicaoSelecionada})`;
                     tocarBipe('sucesso');
                     
-                    // Adiciona na tabela
-                    const row = `<tr><td><strong>${result.label}</strong></td><td>${new Date().toLocaleTimeString()}</td><td><span class="tag-sucesso">CONFIRMADO</span></td></tr>`;
+                    // Adiciona na tabela incluindo a escolha da refeição
+                    const row = `<tr>
+                        <td><strong>${result.label}</strong></td>
+                        <td>${refeicaoSelecionada}</td>
+                        <td>${new Date().toLocaleTimeString()}</td>
+                        <td><span class="tag-sucesso">CONFIRMADO</span></td>
+                    </tr>`;
                     corpoTabela.innerHTML = row + corpoTabela.innerHTML;
+
+                    // Limpa a seleção para o próximo aluno da fila
+                    refeicaoSelecionada = "";
+                    btnCafe.classList.remove("ativo");
+                    btnAlmoco.classList.remove("ativo");
+                    btnAmbos.classList.remove("ativo");
 
                     setTimeout(() => {
                         catracaLiberada = true;
                         painelStatus.className = "status bloqueado";
-                        painelStatus.innerText = "AGUARDANDO PRÓXIMO...";
-                    }, 5000);
+                        painelStatus.innerText = "PRÓXIMO: ESCOLHA A REFEIÇÃO";
+                    }, 4000);
                 }
             }
         });
