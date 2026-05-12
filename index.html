@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu TCC - Reconhecimento Facial</title>
+    <style>
+        #containerVideo {
+            position: relative;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sistema de Acesso Escolar</h1>
+    <button id="btnLigar">Ligar Câmera</button>
+    <br>
+    
+    <div id="containerVideo">
+        <video id="videoEscola" autoplay muted width="640" height="480" style="border: 2px solid black;"></video>
+    </div>
+
+    <img id="fotoAluno" src="aluno.jpg" style="display: none;">
+
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+    
+    <script>
+        const botao = document.getElementById("btnLigar");
+        const video = document.getElementById("videoEscola");
+        const container = document.getElementById("containerVideo");
+        const imgAluno = document.getElementById("fotoAluno");
+        
+        let comparadorDeRostos; // Variável para guardar a memória do seu rosto
+
+        // 2. Função para baixar a IA e "estudar" a foto da matrícula
+        async function carregarSistema() {
+            const urlModelos = 'https://vladmandic.github.io/face-api/model/';
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(urlModelos),
+                faceapi.nets.faceLandmark68Net.loadFromUri(urlModelos),
+                faceapi.nets.faceRecognitionNet.loadFromUri(urlModelos)
+            ]);
+
+            console.log("Estudando a foto do aluno...");
+            // A IA analisa a foto escondida e extrai os 128 números
+            const deteccaoFoto = await faceapi.detectSingleFace(imgAluno, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+            
+            if (!deteccaoFoto) {
+                alert("Erro: A IA não achou um rosto na foto aluno.jpg. Tente uma foto mais clara.");
+                return;
+            }
+
+            // 3. Cadastra o rosto com um nome (MUDE PARA O SEU NOME AQUI)
+            const cadastroAluno = new faceapi.LabeledFaceDescriptors("Kaio", [deteccaoFoto.descriptor]);
+            
+            // Cria o "Avaliador" que exige 60% (0.6) de semelhança para liberar a catraca
+            comparadorDeRostos = new faceapi.FaceMatcher([cadastroAluno], 0.6);
+            
+            alert("Sistema pronto! IA carregada e rosto cadastrado.");
+        }
+
+        carregarSistema();
+
+        // 4. Liga a câmera
+        botao.addEventListener("click", async function() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (erro) {
+                console.error("Erro ao acessar a câmera: ", erro);
+            }
+        });
+
+        // 5. A comparação em tempo real
+        video.addEventListener("play", () => {
+            const canvas = faceapi.createCanvasFromMedia(video);
+            container.append(canvas);
+            const tamanho = { width: video.width, height: video.height };
+            faceapi.matchDimensions(canvas, tamanho);
+
+            setInterval(async () => {
+                // AGORA PEDIMOS O DESCRITOR TAMBÉM (withFaceDescriptors)
+                const rostosWebcam = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+                
+                canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+                const rostosAjustados = faceapi.resizeResults(rostosWebcam, tamanho);
+                
+                // Para cada rosto que aparecer na webcam, compara com a foto guardada
+                const resultados = rostosAjustados.map(rosto => comparadorDeRostos.findBestMatch(rosto.descriptor));
+
+                // Desenha a caixa azul e escreve o nome da pessoa
+                resultados.forEach((resultado, i) => {
+                    const caixa = rostosAjustados[i].detection.box;
+                    const texto = new faceapi.draw.DrawBox(caixa, { label: resultado.toString() });
+                    texto.draw(canvas);
+                });
+
+            }, 100);
+        });
+    </script>
+</body>
+</html>
