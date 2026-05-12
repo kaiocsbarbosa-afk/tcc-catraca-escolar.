@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu TCC - Reconhecimento Facial</title>
+    <title>Sistema de Acesso - TCC</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     
     <div class="painel-principal">
         <header>
-            <h1>Sistema de Acesso Escolar</h1>
-            <p>Reconhecimento Facial Integrado por IA</p>
+            <h1>Controle de Acesso Escolar</h1>
+            <p>Monitoramento em Tempo Real</p>
         </header>
 
         <div id="statusCatraca" class="status bloqueado">
-            CATRACA BLOQUEADA
+            AGUARDANDO INICIALIZAÇÃO...
         </div>
 
         <div class="controles">
@@ -26,12 +26,27 @@
             <video id="videoEscola" autoplay muted width="640" height="480"></video>
         </div>
 
-        <img id="fotoAluno" src="aluno.jpg" alt="Foto do Aluno">
+        <div class="historico-container">
+            <h3>Histórico de Entradas</h3>
+            <table id="tabelaHistorico">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Horário</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela">
+                    </tbody>
+            </table>
+        </div>
+
+        <div id="fotosBiblioteca" style="display: none;">
+            <img id="Kaio" src="aluno.jpg"> 
+            </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
-    
     <script src="script.js"></script>
-    
 </body>
 </html>
