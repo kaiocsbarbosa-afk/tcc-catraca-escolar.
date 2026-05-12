@@ -76,6 +76,71 @@
             } catch (erro) {
                 console.error("Erro na leitura da foto: ", erro);
             }
+        }
+
+        carregarSistema();
+
+        botao.addEventListener("click", async function() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (erro) {
+                alert("Erro ao ligar a câmera.");
+            }
+        });
+
+        video.addEventListener("play", () => {
+            const canvas = faceapi.createCanvasFromMedia(video);
+            container.append(canvas);
+            const tamanho = { width: video.width, height: video.height };
+            faceapi.matchDimensions(canvas, tamanho);
+
+            setInterval(async () => {
+                if (!comparadorDeRostos) return; 
+
+                const rostosWebcam = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+                
+                canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+                const rostosAjustados = faceapi.resizeResults(rostosWebcam, tamanho);
+                
+                const resultados = rostosAjustados.map(rosto => comparadorDeRostos.findBestMatch(rosto.descriptor));
+
+                let alunoReconhecido = false;
+
+                resultados.forEach((resultado, i) => {
+                    const caixa = rostosAjustados[i].detection.box;
+                    const texto = new faceapi.draw.DrawBox(caixa, { label: resultado.toString() });
+                    texto.draw(canvas);
+
+                    if (resultado.label !== "unknown") {
+                        alunoReconhecido = true;
+                    }
+                });
+
+                // A MÁGICA ACONTECE AQUI
+                if (alunoReconhecido && catracaLiberada && painelStatus) {
+                    catracaLiberada = false; // Tranca o sistema temporariamente
+                    
+                    const horaAtual = new Date().toLocaleTimeString('pt-BR'); // Pega a hora do computador
+                    
+                    painelStatus.style.backgroundColor = "green";
+                    painelStatus.innerText = "ACESSO LIBERADO: " + horaAtual;
+                    
+                    tocarBipe(); // Toca o som
+
+                    // Espera 3 segundos (3000 milissegundos) para fechar a catraca de novo
+                    setTimeout(() => {
+                        catracaLiberada = true;
+                    }, 3000);
+
+                } else if (!alunoReconhecido && catracaLiberada && painelStatus) {
+                    // Só volta a ficar vermelho se o tempo de 3s já passou
+                    painelStatus.style.backgroundColor = "red";
+                    painelStatus.innerText = "CATRACA BLOQUEADA";
+                }
+
+            }, 100);
+        });
     </script>
 </body>
 </html>
