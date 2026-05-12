@@ -84,6 +84,15 @@
             faceapi.matchDimensions(canvas, tamanho);
 
             setInterval(async () => {
+                setInterval(async () => {
+                
+                // --- NOVA TRAVA DE SEGURANÇA ---
+                if (!comparadorDeRostos) {
+                    return; // Ignora este quadro do vídeo se a memória estiver vazia
+                }
+                // -------------------------------
+
+                const rostosWebcam = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
                 // AGORA PEDIMOS O DESCRITOR TAMBÉM (withFaceDescriptors)
                 const rostosWebcam = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
                 
