@@ -15,19 +15,19 @@
         </header>
 
         <div class="dashboard-contadores">
-    <div class="card-contador">
-        <h4>Cafés</h4>
-        <span id="contCafe">0</span>
-    </div>
-    <div class="card-contador">
-        <h4>Almoços</h4>
-        <span id="contAlmoco">0</span>
-    </div>
-    <div class="card-contador">
-        <h4>Total Geral</h4>
-        <span id="contTotal">0</span>
-    </div>
-</div>
+            <div class="card-contador">
+                <h4>Cafés</h4>
+                <span id="contCafe">0</span>
+            </div>
+            <div class="card-contador">
+                <h4>Almoços</h4>
+                <span id="contAlmoco">0</span>
+            </div>
+            <div class="card-contador">
+                <h4>Total Geral</h4>
+                <span id="contTotal">0</span>
+            </div>
+        </div>
 
         <div id="statusCatraca" class="status bloqueado">
             INICIALIZANDO IA...
@@ -55,23 +55,23 @@
         <div class="historico-container">
             <h3>Alunos Confirmados</h3>
             <table id="tabelaHistorico">
-               <thead>
-    <tr>
-        <th>Foto</th>
-        <th>Nome</th>
-        <th>Turma</th> <th>Refeição</th>
-        <th>Horário</th>
-        <th>Status</th>
-    </tr>
-</thead>
-
-<div id="fotosBiblioteca" style="display: none;">
-    <img id="Kaio" src="aluno.jpg" data-turma="3ºIPI">
-    </div>
+                <thead>
+                    <tr>
+                        <th>Foto</th>
+                        <th>Nome</th>
+                        <th>Turma</th> 
+                        <th>Refeição</th>
+                        <th>Horário</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela"></tbody>
+            </table>
         </div>
+
+        <div id="fotosBiblioteca" style="display: none;">
+            <img id="Kaio" src="aluno.jpg" data-turma="3ºIPI">
+            </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
-    <script src="script.js"></script>
-</body>
-</html>
+    <script src="
