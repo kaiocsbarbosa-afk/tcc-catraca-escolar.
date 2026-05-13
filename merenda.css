@@ -83,40 +83,42 @@ body {
 .item-menu strong { color: var(--amarelo); }
 
 /* Câmera Perfeitamente Alinhada */
+/* --- CÂMERA MAIOR E MAIS QUADRADA --- */
 .viewport-camera {
     flex-grow: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
-    background: #000;
-    border-radius: 25px;
-    border: 8px solid #334155;
-    overflow: hidden;
-    box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+    padding: 10px;
 }
 
 #containerVideo {
     position: relative;
     width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    max-width: 800px; /* Limite para não estourar telas gigantes */
+    aspect-ratio: 4 / 3; /* Formato mais quadrado/TV, tira o visual de "faixa" */
+    border-radius: 25px;
+    border: 8px solid #334155;
+    background: #000;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 video {
     width: 100%;
     height: 100%;
-    object-fit: contain; 
-    transform: scaleX(-1); /* Efeito espelho */
+    object-fit: cover; /* Preenche todo o quadrado sem deixar bordas pretas */
+    transform: scaleX(-1); 
 }
 
 canvas {
     position: absolute;
-    transform: scaleX(-1); /* Espelha junto com o vídeo */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: scaleX(-1); 
 }
-
 /* Botões Gigantes para TouchScreen */
 .controles-aluno {
     padding-bottom: 10px;
