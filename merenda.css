@@ -1,147 +1,111 @@
 :root {
-    --fundo: #0f172a;
+    --fundo: #020617;
     --card: #1e293b;
     --azul: #3b82f6;
-    --verde: #10b981;
-    --vermelho: #ef4444;
-    --amarelo: #f59e0b;
     --texto: #f8fafc;
+    --amarelo: #eab308;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     background-color: var(--fundo);
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     color: var(--texto);
     height: 100vh;
-    overflow: hidden; /* Mantém tudo fixo na tela do totem */
     display: flex;
-    justify-content: center;
+    overflow: hidden;
 }
 
 .totem-container {
-    width: 100%;
-    max-width: 1200px;
-    height: 100%;
+    width: 100vw;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    gap: 15px;
+    padding: 10px;
 }
 
 /* Header */
-.topo-totem {
+.header-totem {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: 20px;
+    padding: 10px;
+    background: var(--card);
+    border-radius: 15px;
+    margin-bottom: 10px;
 }
-
-.info-principal h1 { font-size: 1.4rem; color: var(--azul); letter-spacing: 1px; }
 
 .status-badge {
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    text-align: center;
-    margin-top: 5px;
-}
-
-.painel-cardapio { display: flex; gap: 15px; flex-grow: 1; justify-content: flex-end; }
-.card-refeicao {
-    background: var(--card);
     padding: 10px 20px;
-    border-radius: 12px;
-    border-left: 4px solid var(--azul);
-    min-width: 200px;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 1.2rem;
+    text-transform: uppercase;
 }
-.card-refeicao .label { font-size: 0.7rem; color: #94a3b8; display: block; }
-.card-refeicao strong { font-size: 0.9rem; color: var(--amarelo); }
 
-/* Central da Câmera */
-.espaco-camera {
+.aguardando { background: #334155; color: #94a3b8; }
+.identificando { background: var(--amarelo); color: #000; border: 2px solid #fff; }
+.sucesso { background: #16a34a; color: #fff; }
+
+/* Câmera Máxima */
+.viewport-camera {
     flex-grow: 1;
     display: flex;
     justify-content: center;
-    align-items: center;
+    position: relative;
 }
 
 #containerVideo {
+    width: 95%;
+    height: 95%;
     position: relative;
-    width: 100%;
-    height: 100%;
-    max-height: 60vh; /* Ocupa 60% da altura da tela */
-    background: #000;
-    border-radius: 30px;
+    border-radius: 25px;
     overflow: hidden;
-    border: 5px solid var(--card);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    border: 6px solid #334155;
+    background: #000;
 }
 
 video {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1); /* Espelha a imagem para o aluno */
+    object-fit: cover; /* Faz a câmera preencher o espaço */
+    transform: scaleX(-1);
 }
 
 canvas {
     position: absolute;
     top: 0;
     left: 0;
-    transform: scaleX(-1); /* Espelha a linha azul também */
+    transform: scaleX(-1);
 }
 
-/* Botões Inferiores */
-.controles-pedido { text-align: center; }
-.instrucao { margin-bottom: 10px; color: #94a3b8; font-weight: bold; }
-
-.grade-botoes {
+/* Botões para TouchScreen */
+.botoes-grade {
     display: flex;
     gap: 15px;
+    padding: 10px 0;
 }
 
-.btn-totem {
+.btn-opcao {
     flex: 1;
-    height: 100px; /* Botões gigantes para facilitar o toque */
+    height: 120px; /* Bem grande para o dedo */
     border: none;
     border-radius: 20px;
-    background: var(--card);
+    background: var(--azul);
     color: white;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     font-weight: 900;
     cursor: pointer;
-    transition: 0.3s;
-    border-bottom: 6px solid #0f172a;
+    box-shadow: 0 8px 0 #1d4ed8;
+    transition: 0.1s;
 }
 
-.btn-totem:active { transform: translateY(4px); border-bottom-width: 2px; }
-.btn-totem.ativo { background: var(--azul); border-color: #1d4ed8; }
-
-/* Barra Administrativa */
-.barra-adm {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem;
-    padding-top: 10px;
-    border-top: 1px solid #334155;
-    color: #64748b;
+.btn-opcao:active {
+    transform: translateY(4px);
+    box-shadow: 0 4px 0 #1d4ed8;
 }
 
-.acoes-adm button {
-    background: none;
-    border: 1px solid #334155;
-    color: #64748b;
-    padding: 4px 10px;
-    margin-left: 5px;
-    border-radius: 4px;
-    cursor: pointer;
+.btn-opcao.ativo {
+    background: #fff;
+    color: var(--azul);
+    border: 4px solid var(--azul);
 }
-
-/* Cores de Status */
-.bloqueado { background: #450a0a; color: #f87171; }
-.liberado { background: #064e3b; color: #34d399; }
-.alerta { background: #422006; color: var(--amarelo); }
