@@ -4,26 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Totem Merenda V2</title>
+    
     <link rel="stylesheet" href="merenda.css">
+    
+    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+    
+    <script defer src="script.js"></script>
 </head>
-<body onload="iniciarTotem()">
+<body>
 
     <div class="totem-container">
         <header class="header-totem">
             <div class="status-box">
-                <div id="statusCatraca" class="status-badge aguardando">INICIALIZANDO...</div>
-                <div class="contagem">Total: <span id="contTotal">0</span></div>
+                <div id="statusCatraca" class="status-badge aguardando">CARREGANDO IA...</div>
+                <div class="contagem">Alunos Atendidos: <span id="contTotal">0</span></div>
             </div>
             <div class="cardapio-display">
-                <div class="item-menu"><strong>CAFÉ:</strong> <span id="menuCafe">Carregando...</span></div>
-                <div class="item-menu"><strong>ALMOÇO:</strong> <span id="menuAlmoco">Carregando...</span></div>
+                <div class="item-menu"><strong>CAFÉ:</strong> <span id="menuCafe">Pão com Ovo e Leite</span></div>
+                <div class="item-menu"><strong>ALMOÇO:</strong> <span id="menuAlmoco">Feijoada com Farofa</span></div>
             </div>
         </header>
 
         <main class="viewport-camera">
             <div id="containerVideo">
                 <video id="videoEscola" autoplay muted playsinline></video>
-                </div>
+            </div>
         </main>
 
         <footer class="controles-aluno">
@@ -35,11 +40,9 @@
         </footer>
 
         <div id="bibliotecaFotos" style="display: none;">
-            <img id="Kaio" src="kaio.jpg" data-turma="3º IPI">
-            </div>
+            <img id="Kaio" src="kaio.jpg" data-turma="3º IPI" crossorigin="anonymous">
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
-    <script src="script.js"></script>
 </body>
 </html>
