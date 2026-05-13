@@ -2,57 +2,52 @@ const video = document.getElementById("videoEscola");
 const container = document.getElementById("containerVideo");
 const painelStatus = document.getElementById("statusCatraca");
 const corpoTabela = document.getElementById("corpoTabela");
-const btnLigar = document.getElementById("btnLigar");
-const btnReset = document.getElementById("btnReset");
-const btnExportar = document.getElementById("btnExportar");
 
-// Botões de escolha de refeição
-const btnCafe = document.getElementById("btnCafe");
-const btnAlmoco = document.getElementById("btnAlmoco");
-const btnAmbos = document.getElementById("btnAmbos");
+// Elementos dos Contadores
+const spanCafe = document.getElementById("contCafe");
+const spanAlmoco = document.getElementById("contAlmoco");
+const spanTotal = document.getElementById("contTotal");
 
 let comparadorDeRostos; 
 let catracaLiberada = true; 
 const alunosQueJaComeram = new Set(); 
 const LISTA_ALUNOS = ["Kaio"]; 
-
-// Variável que guarda o que o aluno escolheu
 let refeicaoSelecionada = "";
 
-// Função para marcar o botão clicado
-function selecionarOpcao(escolha, botaoClicado) {
+// Variáveis de contagem
+let totalCafe = 0;
+let totalAlmoco = 0;
+
+function atualizarContadores(tipo) {
+    if (tipo === "Café") totalCafe++;
+    if (tipo === "Almoço") totalAlmoco++;
+    if (tipo === "Café e Almoço") { totalCafe++; totalAlmoco++; }
+    
+    spanCafe.innerText = totalCafe;
+    spanAlmoco.innerText = totalAlmoco;
+    spanTotal.innerText = totalCafe + totalAlmoco;
+}
+
+// Lógica dos botões de seleção (mesma de antes)
+document.getElementById("btnCafe").addEventListener("click", function() { selecionarOpcao("Café", this); });
+document.getElementById("btnAlmoco").addEventListener("click", function() { selecionarOpcao("Almoço", this); });
+document.getElementById("btnAmbos").addEventListener("click", function() { selecionarOpcao("Café e Almoço", this); });
+
+function selecionarOpcao(escolha, botao) {
     refeicaoSelecionada = escolha;
-    
-    // Tira a marcação de todos
-    btnCafe.classList.remove("ativo");
-    btnAlmoco.classList.remove("ativo");
-    btnAmbos.classList.remove("ativo");
-    
-    // Marca só o que foi clicado
-    botaoClicado.classList.add("ativo");
+    document.querySelectorAll(".btn-opcao").forEach(b => b.classList.remove("ativo"));
+    botao.classList.add("ativo");
     painelStatus.innerText = "OPÇÃO SELECIONADA! OLHE PARA A CÂMERA.";
     painelStatus.className = "status alerta";
 }
 
-btnCafe.addEventListener("click", () => selecionarOpcao("Café", btnCafe));
-btnAlmoco.addEventListener("click", () => selecionarOpcao("Almoço", btnAlmoco));
-btnAmbos.addEventListener("click", () => selecionarOpcao("Café e Almoço", btnAmbos));
-
-function tocarBipe(tipo) {
-    const contexto = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = contexto.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(tipo === 'erro' ? 220 : 880, contexto.currentTime);
-    osc.connect(contexto.destination);
-    osc.start();
-    osc.stop(contexto.currentTime + 0.2);
-}
-
 async function iniciarIA() {
     const URL_MODELOS = 'https://vladmandic.github.io/face-api/model/';
-    await faceapi.nets.tinyFaceDetector.loadFromUri(URL_MODELOS);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(URL_MODELOS);
-    await faceapi.nets.faceRecognitionNet.loadFromUri(URL_MODELOS);
+    await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(URL_MODELOS),
+        faceapi.nets.faceLandmark68Net.loadFromUri(URL_MODELOS),
+        faceapi.nets.faceRecognitionNet.loadFromUri(URL_MODELOS)
+    ]);
 
     const descritores = await Promise.all(LISTA_ALUNOS.map(async nome => {
         const img = document.getElementById(nome);
@@ -66,53 +61,17 @@ async function iniciarIA() {
 
 iniciarIA();
 
-btnLigar.addEventListener("click", async () => {
+document.getElementById("btnLigar").addEventListener("click", async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     video.srcObject = stream;
 });
 
-btnReset.addEventListener("click", () => {
-    alunosQueJaComeram.clear();
-    corpoTabela.innerHTML = "";
-    refeicaoSelecionada = "";
-    btnCafe.classList.remove("ativo");
-    btnAlmoco.classList.remove("ativo");
-    btnAmbos.classList.remove("ativo");
-    alert("Lista zerada para o próximo turno!");
-});
-
-// Atualizei a exportação para incluir a coluna de Refeição
-btnExportar.addEventListener("click", () => {
-    if (alunosQueJaComeram.size === 0) return alert("Nenhum aluno registrou refeição.");
-    let csv = "Nome,Refeicao,Horario,Status\n";
-    const linhas = corpoTabela.querySelectorAll("tr");
-    linhas.forEach(linha => {
-        const col = linha.querySelectorAll("td");
-        csv += `${col[0].innerText},${col[1].innerText},${col[2].innerText},${col[3].innerText}\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = window.URL.createObjectURL(blob);
-    link.download = `Relatorio_Merenda_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`;
-    link.click();
-});
-
 video.addEventListener("play", () => {
-    // ... dentro do if (result.label !== "unknown" && catracaLiberada)
+    const canvas = faceapi.createCanvasFromMedia(video);
+    container.append(canvas);
+    const displaySize = { width: video.width, height: video.height };
+    faceapi.matchDimensions(canvas, displaySize);
 
-// Pega o caminho da foto que já está no HTML
-const caminhoFoto = document.getElementById(result.label).src;
-
-// Adiciona na tabela incluindo a foto e a escolha da refeição
-const row = `<tr>
-    <td><img src="${caminhoFoto}" class="foto-miniatura"></td>
-    <td><strong>${result.label}</strong></td>
-    <td>${refeicaoSelecionada}</td>
-    <td>${new Date().toLocaleTimeString()}</td>
-    <td><span class="tag-sucesso">CONFIRMADO</span></td>
-</tr>`;
-
-corpoTabela.innerHTML = row + corpoTabela.innerHTML;
     setInterval(async () => {
         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
         const resized = faceapi.resizeResults(detections, displaySize);
@@ -123,28 +82,25 @@ corpoTabela.innerHTML = row + corpoTabela.innerHTML;
             new faceapi.draw.DrawBox(det.detection.box, { label: result.toString() }).draw(canvas);
 
             if (result.label !== "unknown" && catracaLiberada) {
-                
-                // O SISTEMA SÓ AVANÇA SE O ALUNO TIVER ESCOLHIDO A REFEIÇÃO
                 if (refeicaoSelecionada === "") {
                     painelStatus.className = "status bloqueado";
-                    painelStatus.innerText = "CLIQUE NA REFEIÇÃO PRIMEIRO!";
-                    return; 
+                    painelStatus.innerText = "ESCOLHA A REFEIÇÃO PRIMEIRO!";
+                    return;
                 }
 
                 if (alunosQueJaComeram.has(result.label)) {
                     painelStatus.className = "status alerta";
-                    painelStatus.innerText = `REFEIÇÃO JÁ REGISTRADA: ${result.label.toUpperCase()}`;
-                    tocarBipe('erro');
+                    painelStatus.innerText = "JÁ REGISTRADO: " + result.label.toUpperCase();
                 } else {
                     catracaLiberada = false;
                     alunosQueJaComeram.add(result.label);
                     
-                    painelStatus.className = "status liberado";
-                    painelStatus.innerText = `CONFIRMADO: ${result.label.toUpperCase()} (${refeicaoSelecionada})`;
-                    tocarBipe('sucesso');
-                    
-                    // Adiciona na tabela incluindo a escolha da refeição
+                    // --- AQUI A MÁGICA DA FOTO E DOS CONTADORES ---
+                    const caminhoFoto = document.getElementById(result.label).src;
+                    atualizarContadores(refeicaoSelecionada);
+
                     const row = `<tr>
+                        <td><img src="${caminhoFoto}" class="foto-miniatura"></td>
                         <td><strong>${result.label}</strong></td>
                         <td>${refeicaoSelecionada}</td>
                         <td>${new Date().toLocaleTimeString()}</td>
@@ -152,14 +108,13 @@ corpoTabela.innerHTML = row + corpoTabela.innerHTML;
                     </tr>`;
                     corpoTabela.innerHTML = row + corpoTabela.innerHTML;
 
-                    // Limpa a seleção para o próximo aluno da fila
-                    refeicaoSelecionada = "";
-                    btnCafe.classList.remove("ativo");
-                    btnAlmoco.classList.remove("ativo");
-                    btnAmbos.classList.remove("ativo");
+                    painelStatus.className = "status liberado";
+                    painelStatus.innerText = "BOM APETITE, " + result.label.toUpperCase();
 
                     setTimeout(() => {
                         catracaLiberada = true;
+                        refeicaoSelecionada = "";
+                        document.querySelectorAll(".btn-opcao").forEach(b => b.classList.remove("ativo"));
                         painelStatus.className = "status bloqueado";
                         painelStatus.innerText = "PRÓXIMO: ESCOLHA A REFEIÇÃO";
                     }, 4000);
