@@ -4,6 +4,7 @@
     --azul: #3b82f6;
     --texto: #f8fafc;
     --amarelo: #eab308;
+    --verde: #16a34a;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,97 +16,136 @@ body {
     height: 100vh;
     display: flex;
     overflow: hidden;
+    user-select: none; /* Evita que o usuário selecione texto no totem */
 }
 
 .totem-container {
     width: 100vw;
     display: flex;
     flex-direction: column;
-    padding: 10px;
+    padding: 20px;
+    gap: 20px;
 }
 
-/* Header */
+/* Header Gigante */
 .header-totem {
     display: flex;
     justify-content: space-between;
-    padding: 10px;
+    align-items: center;
+    padding: 20px 30px;
     background: var(--card);
-    border-radius: 15px;
-    margin-bottom: 10px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.status-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .status-badge {
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: 800;
-    font-size: 1.2rem;
+    padding: 15px 30px;
+    border-radius: 15px;
+    font-weight: 900;
+    font-size: 2rem;
     text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
 }
 
 .aguardando { background: #334155; color: #94a3b8; }
-.identificando { background: var(--amarelo); color: #000; border: 2px solid #fff; }
-.sucesso { background: #16a34a; color: #fff; }
+.identificando { background: var(--amarelo); color: #000; border: 4px solid #fff; animation: piscar 1s infinite; }
+.sucesso { background: var(--verde); color: #fff; box-shadow: 0 0 20px var(--verde); }
 
-/* Câmera Máxima */
+@keyframes piscar {
+    50% { opacity: 0.8; transform: scale(0.98); }
+}
+
+.contagem {
+    font-size: 1.5rem;
+    color: #cbd5e1;
+    font-weight: bold;
+}
+
+.cardapio-display {
+    font-size: 1.5rem;
+    background: #0f172a;
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px solid #334155;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.item-menu strong { color: var(--amarelo); }
+
+/* Câmera Perfeitamente Alinhada */
 .viewport-camera {
     flex-grow: 1;
     display: flex;
     justify-content: center;
+    align-items: center;
     position: relative;
+    background: #000;
+    border-radius: 25px;
+    border: 8px solid #334155;
+    overflow: hidden;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
 }
 
 #containerVideo {
-    width: 95%;
-    height: 95%;
     position: relative;
-    border-radius: 25px;
-    overflow: hidden;
-    border: 6px solid #334155;
-    background: #000;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 video {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Faz a câmera preencher o espaço */
-    transform: scaleX(-1);
+    object-fit: contain; 
+    transform: scaleX(-1); /* Efeito espelho */
 }
 
 canvas {
     position: absolute;
-    top: 0;
-    left: 0;
-    transform: scaleX(-1);
+    transform: scaleX(-1); /* Espelha junto com o vídeo */
 }
 
-/* Botões para TouchScreen */
+/* Botões Gigantes para TouchScreen */
+.controles-aluno {
+    padding-bottom: 10px;
+}
+
 .botoes-grade {
     display: flex;
-    gap: 15px;
-    padding: 10px 0;
+    gap: 20px;
 }
 
 .btn-opcao {
     flex: 1;
-    height: 120px; /* Bem grande para o dedo */
+    height: 160px;
     border: none;
-    border-radius: 20px;
+    border-radius: 25px;
     background: var(--azul);
     color: white;
-    font-size: 1.5rem;
+    font-size: 2.2rem;
     font-weight: 900;
     cursor: pointer;
-    box-shadow: 0 8px 0 #1d4ed8;
+    box-shadow: 0 12px 0 #1e3a8a;
     transition: 0.1s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
 }
 
 .btn-opcao:active {
-    transform: translateY(4px);
-    box-shadow: 0 4px 0 #1d4ed8;
-}
-
-.btn-opcao.ativo {
-    background: #fff;
-    color: var(--azul);
-    border: 4px solid var(--azul);
+    transform: translateY(8px);
+    box-shadow: 0 4px 0 #1e3a8a;
 }
