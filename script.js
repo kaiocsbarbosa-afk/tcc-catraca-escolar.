@@ -63,32 +63,20 @@ async function iniciarIA() {
 
 iniciarIA();
 
-// --- FUNÇÃO DE ÁUDIO (Bipes Sintetizados) ---
-function tocarSom(tipo) {
-    const contexto = new (window.AudioContext || window.webkitAudioContext)();
-    const oscilador = contexto.createOscillator();
-    const ganho = contexto.createGain();
-
-    oscilador.connect(ganho);
-    ganho.connect(contexto.destination);
-
-    if (tipo === 'sucesso') {
-        oscilador.frequency.setValueAtTime(880, contexto.currentTime); // Som agudo
-        oscilador.type = 'sine';
-        ganho.gain.setValueAtTime(0.1, contexto.currentTime);
-        oscilador.start();
-        oscilador.stop(contexto.currentTime + 0.2);
-    } else if (tipo === 'erro') {
-        oscilador.frequency.setValueAtTime(220, contexto.currentTime); // Som grave/alerta
-        oscilador.type = 'square';
-        ganho.gain.setValueAtTime(0.05, contexto.currentTime);
-        oscilador.start();
-        oscilador.stop(contexto.currentTime + 0.4);
-    }
+// --- FUNÇÃO DE VOZ (Substituindo os bipes) ---
+function falar(texto) {
+    // Cancela falas anteriores para não encavalar o áudio
+    window.speechSynthesis.cancel();
+    
+    const mensagem = new SpeechSynthesisUtterance(texto);
+    mensagem.lang = 'pt-BR'; // Define o idioma para Português
+    mensagem.rate = 1.2;     // Velocidade da fala (um pouco mais rápido fica mais natural)
+    mensagem.pitch = 1;      // Tom da voz
+    
+    window.speechSynthesis.speak(mensagem);
 }
 
-// Mantenha seu iniciarIA() e o evento do btnLigar...
-// ...
+// ... (Restante do seu código inicial: contadores, botões, iniciarIA) ...
 
 video.addEventListener("play", () => {
     const canvas = faceapi.createCanvasFromMedia(video);
@@ -106,10 +94,11 @@ video.addEventListener("play", () => {
             new faceapi.draw.DrawBox(det.detection.box, { label: result.toString() }).draw(canvas);
 
             if (result.label !== "unknown" && catracaLiberada) {
+                
                 // Caso esqueça de escolher a refeição
                 if (refeicaoSelecionada === "") {
                     if (painelStatus.innerText !== "ESCOLHA A REFEIÇÃO PRIMEIRO!") {
-                        tocarSom('erro'); 
+                        falar("Por favor, selecione sua refeição primeiro."); // VOZ DE AVISO
                         painelStatus.className = "status bloqueado";
                         painelStatus.innerText = "ESCOLHA A REFEIÇÃO PRIMEIRO!";
                     }
@@ -119,7 +108,7 @@ video.addEventListener("play", () => {
                 // Caso o aluno tente passar duas vezes
                 if (alunosQueJaComeram.has(result.label)) {
                     if (painelStatus.innerText !== "JÁ REGISTRADO: " + result.label.toUpperCase()) {
-                        tocarSom('erro');
+                        falar("Atenção, " + result.label + ". Você já registrou sua merenda hoje."); // VOZ DE ALERTA
                         painelStatus.className = "status alerta";
                         painelStatus.innerText = "JÁ REGISTRADO: " + result.label.toUpperCase();
                     }
@@ -128,15 +117,18 @@ video.addEventListener("play", () => {
                     catracaLiberada = false;
                     alunosQueJaComeram.add(result.label);
                     
-                    tocarSom('sucesso'); // Bip de confirmação
-                    
                     const elementoImg = document.getElementById(result.label);
+                    const turma = elementoImg.dataset.turma;
+                    
+                    // VOZ DE SUCESSO PERSONALIZADA
+                    falar("Acesso liberado. Bom apetite, " + result.label + " do " + turma);
+                    
                     atualizarContadores(refeicaoSelecionada);
 
                     const row = `<tr>
                         <td><img src="${elementoImg.src}" class="foto-miniatura"></td>
                         <td><strong>${result.label}</strong></td>
-                        <td>${elementoImg.dataset.turma}</td>
+                        <td>${turma}</td>
                         <td>${refeicaoSelecionada}</td>
                         <td>${new Date().toLocaleTimeString()}</td>
                         <td><span class="tag-sucesso">CONFIRMADO</span></td>
@@ -152,7 +144,7 @@ video.addEventListener("play", () => {
                         document.querySelectorAll(".btn-opcao").forEach(b => b.classList.remove("ativo"));
                         painelStatus.className = "status bloqueado";
                         painelStatus.innerText = "PRÓXIMO: ESCOLHA A REFEIÇÃO";
-                    }, 4000);
+                    }, 5000); // Aumentei para 5s para dar tempo da voz terminar
                 }
             }
         });
