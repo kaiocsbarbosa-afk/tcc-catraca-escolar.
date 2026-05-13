@@ -98,63 +98,78 @@ btnExportar.addEventListener("click", () => {
 });
 
 video.addEventListener("play", () => {
+    // 1. Cria o canvas
     const canvas = faceapi.createCanvasFromMedia(video);
     container.append(canvas);
-    const displaySize = { width: video.width, height: video.height };
+
+    // 2. Usa videoWidth/Height em vez de width/height para garantir que não seja 0
+    const displaySize = { 
+        width: video.videoWidth || video.width, 
+        height: video.videoHeight || video.height 
+    };
+
+    // Só prossegue se as dimensões forem válidas
+    if (displaySize.width === 0 || displaySize.height === 0) {
+        console.warn("Aguardando dimensões do vídeo...");
+        return; 
+    }
+
     faceapi.matchDimensions(canvas, displaySize);
 
     setInterval(async () => {
-        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
-        const resized = faceapi.resizeResults(detections, displaySize);
-        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks()
+            .withFaceDescriptors();
 
-        resized.forEach(det => {
-            const result = comparadorDeRostos.findBestMatch(det.descriptor);
-            new faceapi.draw.DrawBox(det.detection.box, { label: result.toString() }).draw(canvas);
+        // Verifica se há dimensões válidas antes de redimensionar
+        if (displaySize.width > 0 && displaySize.height > 0) {
+            const resized = faceapi.resizeResults(detections, displaySize);
+            canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 
-            if (result.label !== "unknown" && catracaLiberada) {
-                
-                // O SISTEMA SÓ AVANÇA SE O ALUNO TIVER ESCOLHIDO A REFEIÇÃO
-                if (refeicaoSelecionada === "") {
-                    painelStatus.className = "status bloqueado";
-                    painelStatus.innerText = "CLIQUE NA REFEIÇÃO PRIMEIRO!";
-                    return; 
-                }
+            resized.forEach(det => {
+                const result = comparadorDeRostos.findBestMatch(det.descriptor);
+                new faceapi.draw.DrawBox(det.detection.box, { label: result.toString() }).draw(canvas);
 
-                if (alunosQueJaComeram.has(result.label)) {
-                    painelStatus.className = "status alerta";
-                    painelStatus.innerText = `REFEIÇÃO JÁ REGISTRADA: ${result.label.toUpperCase()}`;
-                    tocarBipe('erro');
-                } else {
-                    catracaLiberada = false;
-                    alunosQueJaComeram.add(result.label);
-                    
-                    painelStatus.className = "status liberado";
-                    painelStatus.innerText = `CONFIRMADO: ${result.label.toUpperCase()} (${refeicaoSelecionada})`;
-                    tocarBipe('sucesso');
-                    
-                    // Adiciona na tabela incluindo a escolha da refeição
-                    const row = `<tr>
-                        <td><strong>${result.label}</strong></td>
-                        <td>${refeicaoSelecionada}</td>
-                        <td>${new Date().toLocaleTimeString()}</td>
-                        <td><span class="tag-sucesso">CONFIRMADO</span></td>
-                    </tr>`;
-                    corpoTabela.innerHTML = row + corpoTabela.innerHTML;
-
-                    // Limpa a seleção para o próximo aluno da fila
-                    refeicaoSelecionada = "";
-                    btnCafe.classList.remove("ativo");
-                    btnAlmoco.classList.remove("ativo");
-                    btnAmbos.classList.remove("ativo");
-
-                    setTimeout(() => {
-                        catracaLiberada = true;
+                if (result.label !== "unknown" && catracaLiberada) {
+                    if (refeicaoSelecionada === "") {
                         painelStatus.className = "status bloqueado";
-                        painelStatus.innerText = "PRÓXIMO: ESCOLHA A REFEIÇÃO";
-                    }, 4000);
+                        painelStatus.innerText = "CLIQUE NA REFEIÇÃO PRIMEIRO!";
+                        return; 
+                    }
+
+                    if (alunosQueJaComeram.has(result.label)) {
+                        painelStatus.className = "status alerta";
+                        painelStatus.innerText = `REFEIÇÃO JÁ REGISTRADA: ${result.label.toUpperCase()}`;
+                        tocarBipe('erro');
+                    } else {
+                        catracaLiberada = false;
+                        alunosQueJaComeram.add(result.label);
+                        
+                        painelStatus.className = "status liberado";
+                        painelStatus.innerText = `CONFIRMADO: ${result.label.toUpperCase()} (${refeicaoSelecionada})`;
+                        tocarBipe('sucesso');
+                        
+                        const row = `<tr>
+                            <td><strong>${result.label}</strong></td>
+                            <td>${refeicaoSelecionada}</td>
+                            <td>${new Date().toLocaleTimeString()}</td>
+                            <td><span class="tag-sucesso">CONFIRMADO</span></td>
+                        </tr>`;
+                        corpoTabela.innerHTML = row + corpoTabela.innerHTML;
+
+                        refeicaoSelecionada = "";
+                        btnCafe.classList.remove("ativo");
+                        btnAlmoco.classList.remove("ativo");
+                        btnAmbos.classList.remove("ativo");
+
+                        setTimeout(() => {
+                            catracaLiberada = true;
+                            painelStatus.className = "status bloqueado";
+                            painelStatus.innerText = "PRÓXIMO: ESCOLHA A REFEIÇÃO";
+                        }, 4000);
+                    }
                 }
-            }
-        });
+            });
+        }
     }, 100);
 });
