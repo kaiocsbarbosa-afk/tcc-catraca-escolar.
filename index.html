@@ -3,57 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Totem Merenda Inteligente - TCC</title>
+    <title>Totem Merenda V2</title>
     <link rel="stylesheet" href="merenda.css">
 </head>
 <body onload="iniciarTotem()">
 
     <div class="totem-container">
-        <header class="topo-totem">
-            <div class="info-principal">
-                <h1>TOTEM DE MERENDA</h1>
-                <div id="statusCatraca" class="status-badge bloqueado">CARREGANDO...</div>
+        <header class="header-totem">
+            <div class="status-box">
+                <div id="statusCatraca" class="status-badge aguardando">INICIALIZANDO...</div>
+                <div class="contagem">Total: <span id="contTotal">0</span></div>
             </div>
-            
-            <div class="painel-cardapio">
-                <div class="card-refeicao">
-                    <span class="label">☕ CAFÉ DA MANHÃ</span>
-                    <strong id="menuCafe">Leite, Pão e Fruta</strong>
-                </div>
-                <div class="card-refeicao">
-                    <span class="label">🍛 ALMOÇO DO DIA</span>
-                    <strong id="menuAlmoco">Arroz, Feijão e Carne</strong>
-                </div>
+            <div class="cardapio-display">
+                <div class="item-menu"><strong>CAFÉ:</strong> <span id="menuCafe">Carregando...</span></div>
+                <div class="item-menu"><strong>ALMOÇO:</strong> <span id="menuAlmoco">Carregando...</span></div>
             </div>
         </header>
 
-        <main class="espaco-camera">
+        <main class="viewport-camera">
             <div id="containerVideo">
                 <video id="videoEscola" autoplay muted playsinline></video>
                 </div>
         </main>
 
-        <footer class="controles-pedido">
-            <p class="instrucao">Selecione o que vai comer agora:</p>
-            <div class="grade-botoes">
-                <button class="btn-totem" id="btnCafe">SOLICITAR CAFÉ</button>
-                <button class="btn-totem" id="btnAlmoco">SOLICITAR ALMOÇO</button>
-                <button class="btn-totem" id="btnAmbos">SOLICITAR AMBOS</button>
+        <footer class="controles-aluno">
+            <div class="botoes-grade">
+                <button class="btn-opcao" onclick="selecionar('CAFÉ')">☕ PEDIR CAFÉ</button>
+                <button class="btn-opcao" onclick="selecionar('ALMOÇO')">🍛 PEDIR ALMOÇO</button>
+                <button class="btn-opcao" onclick="selecionar('AMBOS')">🍽️ AMBOS</button>
             </div>
         </footer>
 
-        <div class="barra-adm">
-            <div class="contador">Registros Hoje: <b id="contTotal">0</b></div>
-            <div class="acoes-adm">
-                <button onclick="mudarCardapio()">Configurar Cardápio</button>
-                <button id="btnExportar">Baixar Relatório</button>
-                <button id="btnReset">Reiniciar</button>
-            </div>
-        </div>
-
         <div id="bibliotecaFotos" style="display: none;">
-            <img id="Kaio" src="kaio.jpg" data-turma="3º Ano IPI">
-        </div>
+            <img id="Kaio" src="kaio.jpg" data-turma="3º IPI">
+            </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
