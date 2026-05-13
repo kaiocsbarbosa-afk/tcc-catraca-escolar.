@@ -134,6 +134,16 @@ td { padding: 12px; border-bottom: 1px solid #eee; }
     font-weight: bold;
 }
 
+/* Estilo da miniatura na tabela */
+.foto-miniatura {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%; /* Deixa redondinha */
+    object-fit: cover;
+    border: 2px solid #3498db;
+    vertical-align: middle;
+}
+
 /* Esconde as fotos cadastradas no final da página */
 #fotosBiblioteca img {
     display: none;
