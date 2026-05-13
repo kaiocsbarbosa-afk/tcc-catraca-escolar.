@@ -2,64 +2,57 @@ const video = document.getElementById("videoEscola");
 const container = document.getElementById("containerVideo");
 const painelStatus = document.getElementById("statusCatraca");
 const corpoTabela = document.getElementById("corpoTabela");
-
-const spanCafe = document.getElementById("contCafe");
-const spanAlmoco = document.getElementById("contAlmoco");
-const spanTotal = document.getElementById("contTotal");
-
 const btnLigar = document.getElementById("btnLigar");
 const btnReset = document.getElementById("btnReset");
 const btnExportar = document.getElementById("btnExportar");
 
+// Botões de escolha de refeição
+const btnCafe = document.getElementById("btnCafe");
+const btnAlmoco = document.getElementById("btnAlmoco");
+const btnAmbos = document.getElementById("btnAmbos");
+
 let comparadorDeRostos; 
 let catracaLiberada = true; 
 const alunosQueJaComeram = new Set(); 
-const LISTA_ALUNOS = ["Kaio"]; // Adicione mais nomes aqui conforme cadastrar fotos
+const LISTA_ALUNOS = ["Kaio"]; 
+
+// Variável que guarda o que o aluno escolheu
 let refeicaoSelecionada = "";
 
-let totalCafe = 0;
-let totalAlmoco = 0;
-
-// --- FUNÇÃO DE VOZ ---
-function falar(texto) {
-    window.speechSynthesis.cancel();
-    const mensagem = new SpeechSynthesisUtterance(texto);
-    mensagem.lang = 'pt-BR';
-    mensagem.rate = 1.2;
-    window.speechSynthesis.speak(mensagem);
-}
-
-function atualizarContadores(tipo) {
-    if (tipo === "Café") totalCafe++;
-    if (tipo === "Almoço") totalAlmoco++;
-    if (tipo === "Café e Almoço") { totalCafe++; totalAlmoco++; }
-    
-    spanCafe.innerText = totalCafe;
-    spanAlmoco.innerText = totalAlmoco;
-    spanTotal.innerText = totalCafe + totalAlmoco;
-}
-
-// Botões de refeição
-document.getElementById("btnCafe").addEventListener("click", function() { selecionarOpcao("Café", this); });
-document.getElementById("btnAlmoco").addEventListener("click", function() { selecionarOpcao("Almoço", this); });
-document.getElementById("btnAmbos").addEventListener("click", function() { selecionarOpcao("Café e Almoço", this); });
-
-function selecionarOpcao(escolha, botao) {
+// Função para marcar o botão clicado
+function selecionarOpcao(escolha, botaoClicado) {
     refeicaoSelecionada = escolha;
-    document.querySelectorAll(".btn-opcao").forEach(b => b.classList.remove("ativo"));
-    botao.classList.add("ativo");
+    
+    // Tira a marcação de todos
+    btnCafe.classList.remove("ativo");
+    btnAlmoco.classList.remove("ativo");
+    btnAmbos.classList.remove("ativo");
+    
+    // Marca só o que foi clicado
+    botaoClicado.classList.add("ativo");
     painelStatus.innerText = "OPÇÃO SELECIONADA! OLHE PARA A CÂMERA.";
     painelStatus.className = "status alerta";
 }
 
-// Inicializar Modelos da IA
+btnCafe.addEventListener("click", () => selecionarOpcao("Café", btnCafe));
+btnAlmoco.addEventListener("click", () => selecionarOpcao("Almoço", btnAlmoco));
+btnAmbos.addEventListener("click", () => selecionarOpcao("Café e Almoço", btnAmbos));
+
+function tocarBipe(tipo) {
+    const contexto = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = contexto.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(tipo === 'erro' ? 220 : 880, contexto.currentTime);
+    osc.connect(contexto.destination);
+    osc.start();
+    osc.stop(contexto.currentTime + 0.2);
+}
+
 async function iniciarIA() {
     const URL_MODELOS = 'https://vladmandic.github.io/face-api/model/';
-    await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(URL_MODELOS),
-        faceapi.nets.faceLandmark68Net.loadFromUri(URL_MODELOS),
-        faceapi.nets.faceRecognitionNet.loadFromUri(URL_MODELOS)
-    ]);
+    await faceapi.nets.tinyFaceDetector.loadFromUri(URL_MODELOS);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(URL_MODELOS);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(URL_MODELOS);
 
     const descritores = await Promise.all(LISTA_ALUNOS.map(async nome => {
         const img = document.getElementById(nome);
@@ -73,33 +66,34 @@ async function iniciarIA() {
 
 iniciarIA();
 
-// Controles de Câmera e Relatório
 btnLigar.addEventListener("click", async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     video.srcObject = stream;
 });
 
 btnReset.addEventListener("click", () => {
-    if(confirm("Deseja zerar a lista e os contadores?")) {
-        alunosQueJaComeram.clear();
-        corpoTabela.innerHTML = "";
-        totalCafe = 0; totalAlmoco = 0;
-        spanCafe.innerText = "0"; spanAlmoco.innerText = "0"; spanTotal.innerText = "0";
-        falar("Sistema reiniciado.");
-    }
+    alunosQueJaComeram.clear();
+    corpoTabela.innerHTML = "";
+    refeicaoSelecionada = "";
+    btnCafe.classList.remove("ativo");
+    btnAlmoco.classList.remove("ativo");
+    btnAmbos.classList.remove("ativo");
+    alert("Lista zerada para o próximo turno!");
 });
 
+// Atualizei a exportação para incluir a coluna de Refeição
 btnExportar.addEventListener("click", () => {
-    if (alunosQueJaComeram.size === 0) return alert("Nenhum registro.");
-    let csv = "Nome,Turma,Refeicao,Horario\n";
-    corpoTabela.querySelectorAll("tr").forEach(linha => {
+    if (alunosQueJaComeram.size === 0) return alert("Nenhum aluno registrou refeição.");
+    let csv = "Nome,Refeicao,Horario,Status\n";
+    const linhas = corpoTabela.querySelectorAll("tr");
+    linhas.forEach(linha => {
         const col = linha.querySelectorAll("td");
-        csv += `${col[1].innerText},${col[2].innerText},${col[3].innerText},${col[4].innerText}\n`;
+        csv += `${col[0].innerText},${col[1].innerText},${col[2].innerText},${col[3].innerText}\n`;
     });
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "relatorio_merenda.csv";
+    link.href = window.URL.createObjectURL(blob);
+    link.download = `Relatorio_Merenda_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`;
     link.click();
 });
 
@@ -119,51 +113,46 @@ video.addEventListener("play", () => {
             new faceapi.draw.DrawBox(det.detection.box, { label: result.toString() }).draw(canvas);
 
             if (result.label !== "unknown" && catracaLiberada) {
+                
+                // O SISTEMA SÓ AVANÇA SE O ALUNO TIVER ESCOLHIDO A REFEIÇÃO
                 if (refeicaoSelecionada === "") {
-                    if (painelStatus.innerText !== "ESCOLHA A REFEIÇÃO PRIMEIRO!") {
-                        falar("Por favor, selecione sua refeição primeiro.");
-                        painelStatus.className = "status bloqueado";
-                        painelStatus.innerText = "ESCOLHA A REFEIÇÃO PRIMEIRO!";
-                    }
-                    return;
+                    painelStatus.className = "status bloqueado";
+                    painelStatus.innerText = "CLIQUE NA REFEIÇÃO PRIMEIRO!";
+                    return; 
                 }
 
                 if (alunosQueJaComeram.has(result.label)) {
-                    if (painelStatus.innerText !== "JÁ REGISTRADO: " + result.label.toUpperCase()) {
-                        falar("Atenção, " + result.label + ". Você já registrou sua merenda.");
-                        painelStatus.className = "status alerta";
-                        painelStatus.innerText = "JÁ REGISTRADO: " + result.label.toUpperCase();
-                    }
+                    painelStatus.className = "status alerta";
+                    painelStatus.innerText = `REFEIÇÃO JÁ REGISTRADA: ${result.label.toUpperCase()}`;
+                    tocarBipe('erro');
                 } else {
                     catracaLiberada = false;
                     alunosQueJaComeram.add(result.label);
                     
-                    const elementoImg = document.getElementById(result.label);
-                    const turma = elementoImg.dataset.turma;
+                    painelStatus.className = "status liberado";
+                    painelStatus.innerText = `CONFIRMADO: ${result.label.toUpperCase()} (${refeicaoSelecionada})`;
+                    tocarBipe('sucesso');
                     
-                    falar("Acesso liberado. Bom apetite, " + result.label + " do " + turma);
-                    atualizarContadores(refeicaoSelecionada);
-
+                    // Adiciona na tabela incluindo a escolha da refeição
                     const row = `<tr>
-                        <td><img src="${elementoImg.src}" class="foto-miniatura"></td>
                         <td><strong>${result.label}</strong></td>
-                        <td>${turma}</td>
                         <td>${refeicaoSelecionada}</td>
                         <td>${new Date().toLocaleTimeString()}</td>
                         <td><span class="tag-sucesso">CONFIRMADO</span></td>
                     </tr>`;
                     corpoTabela.innerHTML = row + corpoTabela.innerHTML;
 
-                    painelStatus.className = "status liberado";
-                    painelStatus.innerText = "BOM APETITE, " + result.label.toUpperCase();
+                    // Limpa a seleção para o próximo aluno da fila
+                    refeicaoSelecionada = "";
+                    btnCafe.classList.remove("ativo");
+                    btnAlmoco.classList.remove("ativo");
+                    btnAmbos.classList.remove("ativo");
 
                     setTimeout(() => {
                         catracaLiberada = true;
-                        refeicaoSelecionada = "";
-                        document.querySelectorAll(".btn-opcao").forEach(b => b.classList.remove("ativo"));
                         painelStatus.className = "status bloqueado";
                         painelStatus.innerText = "PRÓXIMO: ESCOLHA A REFEIÇÃO";
-                    }, 5000);
+                    }, 4000);
                 }
             }
         });
