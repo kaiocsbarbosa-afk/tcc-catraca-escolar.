@@ -3,51 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Totem de Merenda - Escola</title>
-    <link rel="stylesheet" href="merenda.css">
+    <title>Totem Merenda Inteligente</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body onload="iniciarAutomatico()">
+<body onload="iniciarTotem()">
 
-    <div class="painel-principal">
-        <header>
-            <h1>Totem de Merenda</h1>
-            <p>Aproxime-se para identificação</p>
+    <div class="totem-container">
+        <header class="painel-info">
+            <div class="titulo-setor">
+                <h1>SISTEMA DE MERENDA</h1>
+                <div id="statusCatraca" class="status-badge bloqueado">INICIALIZANDO...</div>
+            </div>
+            
+            <div class="cardapio-grade">
+                <div class="card-menu">
+                    <span class="label">☕ CAFÉ DA MANHÃ</span>
+                    <strong id="menuCafe">Pão com Manteiga e Café com Leite</strong>
+                </div>
+                <div class="card-menu">
+                    <span class="label">🍛 ALMOÇO DO DIA</span>
+                    <strong id="menuAlmoco">Arroz, Feijão e Frango Grelhado</strong>
+                </div>
+            </div>
         </header>
 
-        <div class="dashboard-contadores">
-            <div class="card-contador">Cafés: <span id="contCafe">0</span></div>
-            <div class="card-contador">Almoços: <span id="contAlmoco">0</span></div>
-        </div>
+        <main class="area-interativa">
+            <div id="containerVideo">
+                <video id="videoEscola" autoplay muted playsinline></video>
+                </div>
 
-        <div id="statusCatraca" class="status bloqueado">CARREGANDO SISTEMA...</div>
+            <nav class="botoes-refeicao">
+                <button id="btnCafe" class="btn-acao">REGISTRAR CAFÉ</button>
+                <button id="btnAlmoco" class="btn-acao">REGISTRAR ALMOÇO</button>
+                <button id="btnAmbos" class="btn-acao">AMBOS</button>
+            </nav>
+        </main>
 
-        <div class="painel-escolha">
-            <h2>O que vamos comer?</h2>
-            <div class="botoes-refeicao">
-                <button id="btnCafe" class="btn-opcao">☕ CAFÉ</button>
-                <button id="btnAlmoco" class="btn-opcao">🍛 ALMOÇO</button>
-                <button id="btnAmbos" class="btn-opcao">🍽️ AMBOS</button>
+        <footer class="rodape-adm">
+            <div class="stats">
+                <span>Total Hoje: <b id="contTotal">0</b></span>
             </div>
-        </div>
+            <div class="botoes-adm">
+                <button onclick="configurarMenu()" class="btn-subtle">Configurar Menu</button>
+                <button id="btnExportar" class="btn-subtle">Relatório CSV</button>
+                <button id="btnReset" class="btn-subtle">Zerar</button>
+            </div>
+        </footer>
 
-        <div id="containerVideo">
-            <video id="videoEscola" autoplay muted playsinline width="640" height="480"></video>
-        </div>
-
-        <div class="controles-adm">
-            <button id="btnReset" class="btn-mini">Zerar Turno</button>
-            <button id="btnExportar" class="btn-mini">Exportar CSV</button>
-        </div>
-
-        <div class="historico-container">
-            <table id="tabelaHistorico">
-                <tbody id="corpoTabela"></tbody>
-            </table>
-        </div>
-
-        <div id="fotosBiblioteca" style="display: none;">
-            <img id="Kaio" src="aluno.jpg" data-turma="3º IPI">
-        </div>
+        <div id="bibliotecaFotos" style="display: none;">
+            <img id="Kaio" src="kaio.jpg" data-turma="3º IPI">
+            </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
