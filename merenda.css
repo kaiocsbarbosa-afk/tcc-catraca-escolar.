@@ -1,234 +1,141 @@
-/* Configurações Globais e Variáveis */
 :root {
-    --primaria: #2563eb;    /* Azul Moderno */
-    --sucesso: #16a34a;     /* Verde Aprovado */
-    --perigo: #dc2626;      /* Vermelho Bloqueado */
-    --alerta: #ca8a04;      /* Amarelo Atenção */
-    --fundo: #0f172a;       /* Dark Mode para destacar a câmera */
-    --card: #ffffff;
-    --texto: #1e293b;
+    --bg: #0f172a;
+    --card: #1e293b;
+    --primary: #3b82f6;
+    --success: #10b981;
+    --danger: #ef4444;
+    --text: #f8fafc;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    background-color: var(--fundo);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    color: var(--texto);
+    background: var(--bg);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--text);
+    overflow: hidden; /* Evita rolagens no totem */
     display: flex;
     justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 10px;
+    height: 100vh;
 }
 
-/* Painel Principal (O Totem) */
-.painel-principal {
-    background: var(--card);
+.totem-container {
     width: 100%;
-    max-width: 900px;
-    border-radius: 24px;
-    padding: 25px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    max-width: 1100px;
     display: flex;
     flex-direction: column;
+    padding: 20px;
     gap: 20px;
 }
 
-header {
-    text-align: center;
-}
-
-header h1 {
-    font-size: 1.8rem;
-    color: var(--primaria);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-header p {
-    color: #64748b;
-    font-size: 1rem;
-}
-
-/* Dashboard de Contagem (Topo) */
-.dashboard-contadores {
+/* Header e Cardápio */
+.painel-info {
     display: flex;
-    gap: 15px;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
 }
 
-.card-contador {
-    background: #f1f5f9;
-    padding: 10px 20px;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #475569;
-    border: 1px solid #e2e8f0;
-}
-
-.card-contador span {
-    color: var(--primaria);
-    font-size: 1.1rem;
-    margin-left: 5px;
-}
-
-/* Status da Catraca/Sistema */
-.status {
-    width: 100%;
-    padding: 20px;
-    border-radius: 16px;
-    text-align: center;
-    font-size: 1.3rem;
+.status-badge {
+    padding: 8px 15px;
+    border-radius: 8px;
     font-weight: 800;
-    text-transform: uppercase;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 0.8rem;
+    margin-top: 5px;
 }
 
-.bloqueado { background: #fee2e2; color: var(--perigo); border: 2px solid var(--perigo); }
-.liberado { background: #dcfce7; color: var(--sucesso); border: 2px solid var(--sucesso); }
-.alerta { background: #fef9c3; color: var(--alerta); border: 2px solid var(--alerta); }
-
-/* Painel de Escolha (Botões Grandes) */
-.painel-escolha {
-    text-align: center;
-}
-
-.painel-escolha h2 {
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-    color: #475569;
-}
-
-.botoes-refeicao {
-    display: flex;
-    gap: 15px;
-}
-
-.btn-opcao {
+.cardapio-grade { display: flex; gap: 15px; flex: 1; }
+.card-menu {
+    background: var(--card);
+    padding: 15px;
+    border-radius: 12px;
     flex: 1;
-    height: 110px; /* Altura ideal para toque */
-    border: 3px solid #e2e8f0;
-    border-radius: 16px;
-    background: white;
-    font-size: 1.2rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s;
+    border-bottom: 4px solid var(--primary);
+}
+.card-menu .label { font-size: 0.7rem; color: #94a3b8; display: block; }
+.card-menu strong { font-size: 1rem; color: #fbbf24; }
+
+/* Central da Câmera */
+.area-interativa {
+    flex: 1;
     display: flex;
     flex-direction: column;
+    gap: 20px;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
 }
 
-.btn-opcao:active {
-    transform: scale(0.95);
-}
-
-.btn-opcao.ativo {
-    background: var(--primaria);
-    color: white;
-    border-color: #1d4ed8;
-    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
-}
-
-/* Container do Vídeo (Câmera) */
 #containerVideo {
     position: relative;
     width: 100%;
-    max-width: 640px;
-    margin: 0 auto;
-    border-radius: 20px;
-    overflow: hidden;
+    max-width: 850px; /* Câmera bem grande */
+    aspect-ratio: 16/9;
     background: #000;
-    aspect-ratio: 4/3;
-    border: 5px solid #f1f5f9;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,0.4);
+    border: 4px solid var(--card);
 }
 
 video {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transform: scaleX(-1); /* Espelha a câmera para ficar natural para o aluno */
+    transform: scaleX(-1); /* Espelhamento */
 }
 
 canvas {
     position: absolute;
     top: 0;
     left: 0;
-    transform: scaleX(-1); /* Espelha o desenho da caixa também */
+    transform: scaleX(-1); /* Linha azul acompanha o espelhamento */
 }
 
-/* Tabela de Histórico (Rodapé) */
-.historico-container {
-    max-height: 150px;
-    overflow-y: auto;
-    margin-top: 10px;
-    border-top: 1px solid #eee;
-}
-
-#tabelaHistorico {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-#tabelaHistorico tr {
-    border-bottom: 1px solid #f1f5f9;
-}
-
-#tabelaHistorico td {
-    padding: 10px;
-    font-size: 0.9rem;
-    color: #64748b;
-}
-
-.foto-miniatura {
-    width: 45px;
-    height: 45px;
-    border-radius: 12px;
-    object-fit: cover;
-    border: 2px solid var(--primaria);
-}
-
-/* Controles ADM (Escondidos/Discretos) */
-.controles-adm {
+/* Botões de Toque */
+.botoes-refeicao {
     display: flex;
-    justify-content: center;
     gap: 20px;
-    margin-top: 10px;
-    padding-top: 10px;
+    width: 100%;
 }
 
-.btn-mini {
-    background: none;
-    border: 1px solid #cbd5e1;
-    color: #94a3b8;
-    padding: 5px 15px;
-    border-radius: 8px;
-    font-size: 0.75rem;
+.btn-acao {
+    flex: 1;
+    height: 85px;
+    border: none;
+    border-radius: 18px;
+    background: var(--card);
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 900;
     cursor: pointer;
-    transition: 0.3s;
+    transition: 0.2s;
 }
 
-.btn-mini:hover {
-    background: #f1f5f9;
-    color: var(--texto);
-    border-color: #94a3b8;
+.btn-acao.ativo {
+    background: var(--primary);
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.5);
+    transform: translateY(-5px);
 }
 
-/* Responsividade para Telas Pequenas */
-@media (max-width: 600px) {
-    .botoes-refeicao {
-        flex-direction: column;
-    }
-    .btn-opcao {
-        height: 80px;
-    }
+/* Rodapé */
+.rodape-adm {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #334155;
+    padding-top: 15px;
 }
+
+.btn-subtle {
+    background: transparent;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-left: 10px;
+}
+
+.bloqueado { background: #450a0a; color: #f87171; }
+.liberado { background: #064e3b; color: #34d399; }
+.alerta { background: #422006; color: #fbbf24; }
