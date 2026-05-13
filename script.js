@@ -8,6 +8,11 @@ const spanCafe = document.getElementById("contCafe");
 const spanAlmoco = document.getElementById("contAlmoco");
 const spanTotal = document.getElementById("contTotal");
 
+// Botões de Ação
+const btnLigar = document.getElementById("btnLigar");
+const btnReset = document.getElementById("btnReset");
+const btnExportar = document.getElementById("btnExportar");
+
 let comparadorDeRostos; 
 let catracaLiberada = true; 
 const alunosQueJaComeram = new Set(); 
@@ -28,7 +33,7 @@ function atualizarContadores(tipo) {
     spanTotal.innerText = totalCafe + totalAlmoco;
 }
 
-// Lógica dos botões de seleção (mesma de antes)
+// Lógica dos botões de seleção
 document.getElementById("btnCafe").addEventListener("click", function() { selecionarOpcao("Café", this); });
 document.getElementById("btnAlmoco").addEventListener("click", function() { selecionarOpcao("Almoço", this); });
 document.getElementById("btnAmbos").addEventListener("click", function() { selecionarOpcao("Café e Almoço", this); });
@@ -61,12 +66,24 @@ async function iniciarIA() {
 
 iniciarIA();
 
-document.getElementById("btnLigar").addEventListener("click", async () => {
+btnLigar.addEventListener("click", async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     video.srcObject = stream;
 });
 
-// ... (mantenha o início do código igual até a parte da detecção)
+// Lógica de Reset Atualizada
+btnReset.addEventListener("click", () => {
+    alunosQueJaComeram.clear();
+    corpoTabela.innerHTML = "";
+    refeicaoSelecionada = "";
+    totalCafe = 0;
+    totalAlmoco = 0;
+    spanCafe.innerText = "0";
+    spanAlmoco.innerText = "0";
+    spanTotal.innerText = "0";
+    document.querySelectorAll(".btn-opcao").forEach(b => b.classList.remove("ativo"));
+    alert("Sistema reiniciado para um novo turno!");
+});
 
 video.addEventListener("play", () => {
     const canvas = faceapi.createCanvasFromMedia(video);
@@ -97,14 +114,12 @@ video.addEventListener("play", () => {
                     catracaLiberada = false;
                     alunosQueJaComeram.add(result.label);
                     
-                    // PEGA OS DADOS DA IMAGEM
                     const elementoImagem = document.getElementById(result.label);
                     const caminhoFoto = elementoImagem.src;
-                    const turmaAluno = elementoImagem.dataset.turma; // Puxa o data-turma
+                    const turmaAluno = elementoImagem.dataset.turma || "Não informada";
 
                     atualizarContadores(refeicaoSelecionada);
 
-                    // ADICIONA NA TABELA COM A TURMA
                     const row = `<tr>
                         <td><img src="${caminhoFoto}" class="foto-miniatura"></td>
                         <td><strong>${result.label}</strong></td>
@@ -131,14 +146,12 @@ video.addEventListener("play", () => {
     }, 100);
 });
 
-// ATUALIZE TAMBÉM A FUNÇÃO DE EXPORTAR (Abaixo)
 btnExportar.addEventListener("click", () => {
     if (alunosQueJaComeram.size === 0) return alert("Nenhum registro encontrado.");
-    let csv = "Nome,Turma,Refeicao,Horario\n"; // Adicionado Turma no cabeçalho
+    let csv = "Nome,Turma,Refeicao,Horario\n"; 
     const linhas = corpoTabela.querySelectorAll("tr");
     linhas.forEach(linha => {
         const col = linha.querySelectorAll("td");
-        // col[1] é Nome, col[2] é Turma, col[3] é Refeição...
         csv += `${col[1].innerText},${col[2].innerText},${col[3].innerText},${col[4].innerText}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -146,5 +159,4 @@ btnExportar.addEventListener("click", () => {
     link.href = window.URL.createObjectURL(blob);
     link.download = `Relatorio_Merenda_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`;
     link.click();
-});
 });
