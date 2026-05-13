@@ -63,22 +63,32 @@ async function iniciarIA() {
 
 iniciarIA();
 
-btnLigar.addEventListener("click", async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = stream;
-});
+// --- FUNÇÃO DE ÁUDIO (Bipes Sintetizados) ---
+function tocarSom(tipo) {
+    const contexto = new (window.AudioContext || window.webkitAudioContext)();
+    const oscilador = contexto.createOscillator();
+    const ganho = contexto.createGain();
 
-btnReset.addEventListener("click", () => {
-    if(confirm("Deseja realmente zerar toda a lista e contadores?")) {
-        alunosQueJaComeram.clear();
-        corpoTabela.innerHTML = "";
-        totalCafe = 0; totalAlmoco = 0;
-        spanCafe.innerText = "0"; spanAlmoco.innerText = "0"; spanTotal.innerText = "0";
-        refeicaoSelecionada = "";
-        document.querySelectorAll(".btn-opcao").forEach(b => b.classList.remove("ativo"));
-        painelStatus.innerText = "SISTEMA ZERADO. ESCOLHA A OPÇÃO.";
+    oscilador.connect(ganho);
+    ganho.connect(contexto.destination);
+
+    if (tipo === 'sucesso') {
+        oscilador.frequency.setValueAtTime(880, contexto.currentTime); // Som agudo
+        oscilador.type = 'sine';
+        ganho.gain.setValueAtTime(0.1, contexto.currentTime);
+        oscilador.start();
+        oscilador.stop(contexto.currentTime + 0.2);
+    } else if (tipo === 'erro') {
+        oscilador.frequency.setValueAtTime(220, contexto.currentTime); // Som grave/alerta
+        oscilador.type = 'square';
+        ganho.gain.setValueAtTime(0.05, contexto.currentTime);
+        oscilador.start();
+        oscilador.stop(contexto.currentTime + 0.4);
     }
-});
+}
+
+// Mantenha seu iniciarIA() e o evento do btnLigar...
+// ...
 
 video.addEventListener("play", () => {
     const canvas = faceapi.createCanvasFromMedia(video);
@@ -96,28 +106,37 @@ video.addEventListener("play", () => {
             new faceapi.draw.DrawBox(det.detection.box, { label: result.toString() }).draw(canvas);
 
             if (result.label !== "unknown" && catracaLiberada) {
+                // Caso esqueça de escolher a refeição
                 if (refeicaoSelecionada === "") {
-                    painelStatus.className = "status bloqueado";
-                    painelStatus.innerText = "ESCOLHA A REFEIÇÃO PRIMEIRO!";
+                    if (painelStatus.innerText !== "ESCOLHA A REFEIÇÃO PRIMEIRO!") {
+                        tocarSom('erro'); 
+                        painelStatus.className = "status bloqueado";
+                        painelStatus.innerText = "ESCOLHA A REFEIÇÃO PRIMEIRO!";
+                    }
                     return;
                 }
 
+                // Caso o aluno tente passar duas vezes
                 if (alunosQueJaComeram.has(result.label)) {
-                    painelStatus.className = "status alerta";
-                    painelStatus.innerText = "JÁ REGISTRADO: " + result.label.toUpperCase();
+                    if (painelStatus.innerText !== "JÁ REGISTRADO: " + result.label.toUpperCase()) {
+                        tocarSom('erro');
+                        painelStatus.className = "status alerta";
+                        painelStatus.innerText = "JÁ REGISTRADO: " + result.label.toUpperCase();
+                    }
                 } else {
+                    // SUCESSO!
                     catracaLiberada = false;
                     alunosQueJaComeram.add(result.label);
                     
+                    tocarSom('sucesso'); // Bip de confirmação
+                    
                     const elementoImg = document.getElementById(result.label);
-                    const turma = elementoImg.dataset.turma; // Pega o 3ºIPI
-
                     atualizarContadores(refeicaoSelecionada);
 
                     const row = `<tr>
                         <td><img src="${elementoImg.src}" class="foto-miniatura"></td>
                         <td><strong>${result.label}</strong></td>
-                        <td>${turma}</td>
+                        <td>${elementoImg.dataset.turma}</td>
                         <td>${refeicaoSelecionada}</td>
                         <td>${new Date().toLocaleTimeString()}</td>
                         <td><span class="tag-sucesso">CONFIRMADO</span></td>
@@ -138,19 +157,4 @@ video.addEventListener("play", () => {
             }
         });
     }, 100);
-});
-
-btnExportar.addEventListener("click", () => {
-    if (alunosQueJaComeram.size === 0) return alert("Nenhum registro para exportar.");
-    let csv = "Nome,Turma,Refeicao,Horario\n";
-    const linhas = corpoTabela.querySelectorAll("tr");
-    linhas.forEach(linha => {
-        const col = linha.querySelectorAll("td");
-        csv += `${col[1].innerText},${col[2].innerText},${col[3].innerText},${col[4].innerText}\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = window.URL.createObjectURL(blob);
-    link.download = `Relatorio_Merenda_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`;
-    link.click();
 });
