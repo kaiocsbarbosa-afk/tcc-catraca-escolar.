@@ -88,4 +88,69 @@ video.addEventListener("play", () => {
 
     setInterval(async () => {
         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
-        const resized = faceapi.resizeResults
+        const resized = faceapi.resizeResults(detections, displaySize);
+        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+
+        resized.forEach(det => {
+            const result = comparadorDeRostos.findBestMatch(det.descriptor);
+            new faceapi.draw.DrawBox(det.detection.box, { label: result.toString() }).draw(canvas);
+
+            if (result.label !== "unknown" && catracaLiberada) {
+                if (refeicaoSelecionada === "") {
+                    painelStatus.className = "status bloqueado";
+                    painelStatus.innerText = "ESCOLHA A REFEIÇÃO PRIMEIRO!";
+                    return;
+                }
+
+                if (alunosQueJaComeram.has(result.label)) {
+                    painelStatus.className = "status alerta";
+                    painelStatus.innerText = "JÁ REGISTRADO: " + result.label.toUpperCase();
+                } else {
+                    catracaLiberada = false;
+                    alunosQueJaComeram.add(result.label);
+                    
+                    const elementoImg = document.getElementById(result.label);
+                    const turma = elementoImg.dataset.turma; // Pega o 3ºIPI
+
+                    atualizarContadores(refeicaoSelecionada);
+
+                    const row = `<tr>
+                        <td><img src="${elementoImg.src}" class="foto-miniatura"></td>
+                        <td><strong>${result.label}</strong></td>
+                        <td>${turma}</td>
+                        <td>${refeicaoSelecionada}</td>
+                        <td>${new Date().toLocaleTimeString()}</td>
+                        <td><span class="tag-sucesso">CONFIRMADO</span></td>
+                    </tr>`;
+                    corpoTabela.innerHTML = row + corpoTabela.innerHTML;
+
+                    painelStatus.className = "status liberado";
+                    painelStatus.innerText = "BOM APETITE, " + result.label.toUpperCase();
+
+                    setTimeout(() => {
+                        catracaLiberada = true;
+                        refeicaoSelecionada = "";
+                        document.querySelectorAll(".btn-opcao").forEach(b => b.classList.remove("ativo"));
+                        painelStatus.className = "status bloqueado";
+                        painelStatus.innerText = "PRÓXIMO: ESCOLHA A REFEIÇÃO";
+                    }, 4000);
+                }
+            }
+        });
+    }, 100);
+});
+
+btnExportar.addEventListener("click", () => {
+    if (alunosQueJaComeram.size === 0) return alert("Nenhum registro para exportar.");
+    let csv = "Nome,Turma,Refeicao,Horario\n";
+    const linhas = corpoTabela.querySelectorAll("tr");
+    linhas.forEach(linha => {
+        const col = linha.querySelectorAll("td");
+        csv += `${col[1].innerText},${col[2].innerText},${col[3].innerText},${col[4].innerText}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = window.URL.createObjectURL(blob);
+    link.download = `Relatorio_Merenda_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`;
+    link.click();
+});
