@@ -66,6 +66,8 @@ document.getElementById("btnLigar").addEventListener("click", async () => {
     video.srcObject = stream;
 });
 
+// ... (mantenha o início do código igual até a parte da detecção)
+
 video.addEventListener("play", () => {
     const canvas = faceapi.createCanvasFromMedia(video);
     container.append(canvas);
@@ -95,13 +97,18 @@ video.addEventListener("play", () => {
                     catracaLiberada = false;
                     alunosQueJaComeram.add(result.label);
                     
-                    // --- AQUI A MÁGICA DA FOTO E DOS CONTADORES ---
-                    const caminhoFoto = document.getElementById(result.label).src;
+                    // PEGA OS DADOS DA IMAGEM
+                    const elementoImagem = document.getElementById(result.label);
+                    const caminhoFoto = elementoImagem.src;
+                    const turmaAluno = elementoImagem.dataset.turma; // Puxa o data-turma
+
                     atualizarContadores(refeicaoSelecionada);
 
+                    // ADICIONA NA TABELA COM A TURMA
                     const row = `<tr>
                         <td><img src="${caminhoFoto}" class="foto-miniatura"></td>
                         <td><strong>${result.label}</strong></td>
+                        <td>${turmaAluno}</td>
                         <td>${refeicaoSelecionada}</td>
                         <td>${new Date().toLocaleTimeString()}</td>
                         <td><span class="tag-sucesso">CONFIRMADO</span></td>
@@ -122,4 +129,22 @@ video.addEventListener("play", () => {
             }
         });
     }, 100);
+});
+
+// ATUALIZE TAMBÉM A FUNÇÃO DE EXPORTAR (Abaixo)
+btnExportar.addEventListener("click", () => {
+    if (alunosQueJaComeram.size === 0) return alert("Nenhum registro encontrado.");
+    let csv = "Nome,Turma,Refeicao,Horario\n"; // Adicionado Turma no cabeçalho
+    const linhas = corpoTabela.querySelectorAll("tr");
+    linhas.forEach(linha => {
+        const col = linha.querySelectorAll("td");
+        // col[1] é Nome, col[2] é Turma, col[3] é Refeição...
+        csv += `${col[1].innerText},${col[2].innerText},${col[3].innerText},${col[4].innerText}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = window.URL.createObjectURL(blob);
+    link.download = `Relatorio_Merenda_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`;
+    link.click();
+});
 });
