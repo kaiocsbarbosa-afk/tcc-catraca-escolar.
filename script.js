@@ -98,11 +98,21 @@ btnExportar.addEventListener("click", () => {
 });
 
 video.addEventListener("play", () => {
-    const canvas = faceapi.createCanvasFromMedia(video);
-    container.append(canvas);
-    const displaySize = { width: video.width, height: video.height };
-    faceapi.matchDimensions(canvas, displaySize);
+    // ... dentro do if (result.label !== "unknown" && catracaLiberada)
 
+// Pega o caminho da foto que já está no HTML
+const caminhoFoto = document.getElementById(result.label).src;
+
+// Adiciona na tabela incluindo a foto e a escolha da refeição
+const row = `<tr>
+    <td><img src="${caminhoFoto}" class="foto-miniatura"></td>
+    <td><strong>${result.label}</strong></td>
+    <td>${refeicaoSelecionada}</td>
+    <td>${new Date().toLocaleTimeString()}</td>
+    <td><span class="tag-sucesso">CONFIRMADO</span></td>
+</tr>`;
+
+corpoTabela.innerHTML = row + corpoTabela.innerHTML;
     setInterval(async () => {
         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
         const resized = faceapi.resizeResults(detections, displaySize);
