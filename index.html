@@ -3,75 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Merenda - IA Facial</title>
+    <title>Totem de Merenda - Escola</title>
     <link rel="stylesheet" href="merenda.css">
 </head>
-<body>
+<body onload="iniciarAutomatico()">
 
     <div class="painel-principal">
         <header>
-            <h1>Merenda Escolar Inteligente</h1>
-            <p>Controle de Acesso por Reconhecimento Facial</p>
+            <h1>Totem de Merenda</h1>
+            <p>Aproxime-se para identificação</p>
         </header>
 
         <div class="dashboard-contadores">
-            <div class="card-contador">
-                <h4>Cafés</h4>
-                <span id="contCafe">0</span>
-            </div>
-            <div class="card-contador">
-                <h4>Almoços</h4>
-                <span id="contAlmoco">0</span>
-            </div>
-            <div class="card-contador">
-                <h4>Total</h4>
-                <span id="contTotal">0</span>
-            </div>
+            <div class="card-contador">Cafés: <span id="contCafe">0</span></div>
+            <div class="card-contador">Almoços: <span id="contAlmoco">0</span></div>
         </div>
 
-        <div id="statusCatraca" class="status bloqueado">
-            INICIALIZANDO SISTEMA...
-        </div>
+        <div id="statusCatraca" class="status bloqueado">CARREGANDO SISTEMA...</div>
 
         <div class="painel-escolha">
-            <h3>Selecione sua Refeição</h3>
+            <h2>O que vamos comer?</h2>
             <div class="botoes-refeicao">
-                <button id="btnCafe" class="btn-opcao">☕ Café</button>
-                <button id="btnAlmoco" class="btn-opcao">🍛 Almoço</button>
-                <button id="btnAmbos" class="btn-opcao">🍽️ Ambos</button>
+                <button id="btnCafe" class="btn-opcao">☕ CAFÉ</button>
+                <button id="btnAlmoco" class="btn-opcao">🍛 ALMOÇO</button>
+                <button id="btnAmbos" class="btn-opcao">🍽️ AMBOS</button>
             </div>
         </div>
 
-        <div class="controles">
-            <button id="btnLigar" class="btn-primario">Ligar Câmera</button>
-            <button id="btnReset" class="btn-secundario">Zerar Turno</button>
-            <button id="btnExportar" class="btn-terciario">Baixar CSV</button>
-        </div>
-        
         <div id="containerVideo">
-            <video id="videoEscola" autoplay muted width="640" height="480"></video>
+            <video id="videoEscola" autoplay muted playsinline width="640" height="480"></video>
+        </div>
+
+        <div class="controles-adm">
+            <button id="btnReset" class="btn-mini">Zerar Turno</button>
+            <button id="btnExportar" class="btn-mini">Exportar CSV</button>
         </div>
 
         <div class="historico-container">
-            <h3>Fila de Atendimento</h3>
             <table id="tabelaHistorico">
-                <thead>
-                    <tr>
-                        <th>Foto</th>
-                        <th>Nome</th>
-                        <th>Turma</th>
-                        <th>Refeição</th>
-                        <th>Horário</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
                 <tbody id="corpoTabela"></tbody>
             </table>
         </div>
 
         <div id="fotosBiblioteca" style="display: none;">
             <img id="Kaio" src="aluno.jpg" data-turma="3º IPI">
-            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
