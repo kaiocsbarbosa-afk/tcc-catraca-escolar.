@@ -1,122 +1,21 @@
-:root {
-    --primaria: #3498db;
-    --sucesso: #2ecc71;
-    --perigo: #e74c3c;
-    --alerta: #f39c12;
-    --fundo: #f0f2f5;
-    --texto: #2c3e50;
+/* Adicione ou ajuste estas classes */
+.btn-opcao {
+    height: 100px; /* Botões grandes para toque fácil */
+    font-size: 1.5rem;
 }
 
-body {
-    background-color: var(--fundo);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+.controles-adm {
+    margin-top: 20px;
     display: flex;
     justify-content: center;
-    padding: 20px;
-    color: var(--texto);
-}
-
-.painel-principal {
-    background: white;
-    max-width: 1000px;
-    width: 100%;
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    text-align: center;
-}
-
-/* Dashboard de Cards */
-.dashboard-contadores {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.card-contador {
-    flex: 1;
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 12px;
-    border-bottom: 4px solid var(--primaria);
-}
-
-.card-contador span {
-    font-size: 2rem;
-    font-weight: bold;
-    display: block;
-}
-
-/* Status IA */
-.status {
-    padding: 15px;
-    border-radius: 10px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    color: white;
-    transition: 0.3s;
-}
-
-.bloqueado { background: var(--perigo); }
-.liberado { background: var(--sucesso); }
-.alerta { background: var(--alerta); }
-
-/* Botoes de Refeição */
-.painel-escolha {
-    background: #fdfdfd;
-    border: 2px dashed #ddd;
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 20px;
-}
-
-.botoes-refeicao {
-    display: flex;
     gap: 10px;
-    margin-top: 10px;
+    opacity: 0.5; /* Fica discreto para os alunos não mexerem */
 }
 
-.btn-opcao {
-    flex: 1;
-    padding: 12px;
-    border: 2px solid #eee;
-    background: white;
+.controles-adm:hover { opacity: 1; }
+
+.btn-mini {
+    padding: 5px 10px;
+    font-size: 0.7rem;
     cursor: pointer;
-    font-weight: bold;
-    border-radius: 8px;
-}
-
-.btn-opcao.ativo {
-    background: var(--primaria);
-    color: white;
-    border-color: var(--primaria);
-}
-
-/* Video e Tabela */
-#containerVideo {
-    position: relative;
-    border-radius: 15px;
-    overflow: hidden;
-    background: #000;
-    margin: 20px 0;
-}
-
-canvas { position: absolute; top: 0; left: 0; }
-
-table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
-th, td { padding: 12px; border-bottom: 1px solid #eee; }
-
-.foto-miniatura {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--primaria);
-}
-
-.tag-sucesso {
-    background: #d4edda;
-    color: #155724;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
 }
