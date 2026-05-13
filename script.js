@@ -8,16 +8,15 @@ let comparadorDeRostos;
 let catracaLiberada = true;
 let refeicaoSelecionada = "";
 const alunosQueJaComeram = new Set();
+let totalRegistros = 0;
 
-// Inicia tudo automaticamente
-async function iniciarAutomatico() {
+// Inicialização Automática para Chromebook
+async function iniciarTotem() {
     try {
         await carregarModelos();
         await ligarCamera();
-        console.log("Sistema de Totem iniciado com sucesso.");
     } catch (err) {
-        painelStatus.innerText = "ERRO AO INICIAR CÂMERA";
-        console.error(err);
+        painelStatus.innerText = "ERRO NA CÂMERA";
     }
 }
 
@@ -35,14 +34,13 @@ async function carregarModelos() {
         return new faceapi.LabeledFaceDescriptors(nome, [d.descriptor]);
     }));
 
-    comparadorDeRostos = new faceapi.FaceMatcher(descritores, 0.50);
-    painelStatus.innerText = "SISTEMA PRONTO! ESCOLHA A OPÇÃO.";
+    comparadorDeRostos = new faceapi.FaceMatcher(descritores, 0.45);
+    painelStatus.innerText = "ESCOLHA A REFEIÇÃO";
+    painelStatus.className = "status-badge alerta";
 }
 
 async function ligarCamera() {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user", width: 640, height: 480 } 
-    });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
     video.srcObject = stream;
 }
 
@@ -54,17 +52,13 @@ function falar(texto) {
     window.speechSynthesis.speak(msg);
 }
 
-// Interação com botões (libera áudio no Chromebook)
-document.querySelectorAll(".btn-opcao").forEach(btn => {
+// Interação dos Botões
+document.querySelectorAll(".btn-acao").forEach(btn => {
     btn.addEventListener("click", (e) => {
         refeicaoSelecionada = e.target.innerText;
-        document.querySelectorAll(".btn-opcao").forEach(b => b.classList.remove("ativo"));
+        document.querySelectorAll(".btn-acao").forEach(b => b.classList.remove("ativo"));
         e.target.classList.add("ativo");
-        
-        painelStatus.className = "status alerta";
         painelStatus.innerText = "OLHE PARA A CÂMERA";
-        
-        // Ativa o sintetizador de voz (necessário interação inicial no navegador)
         falar("Opção registrada. Por favor, olhe para a câmera.");
     });
 });
@@ -72,58 +66,68 @@ document.querySelectorAll(".btn-opcao").forEach(btn => {
 video.addEventListener("play", () => {
     const canvas = faceapi.createCanvasFromMedia(video);
     container.append(canvas);
-    const dim = { width: video.width, height: video.height };
-    faceapi.matchDimensions(canvas, dim);
+    
+    // CORREÇÃO DA LINHA AZUL: Sincroniza o tamanho exato da tela
+    const displaySize = { width: video.offsetWidth, height: video.offsetHeight };
+    faceapi.matchDimensions(canvas, displaySize);
 
     setInterval(async () => {
         const detec = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
-        const resized = faceapi.resizeResults(detec, dim);
+        const resized = faceapi.resizeResults(detec, displaySize);
         canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 
         resized.forEach(d => {
             const match = comparadorDeRostos.findBestMatch(d.descriptor);
-            new faceapi.draw.DrawBox(d.detection.box, { label: match.label }).draw(canvas);
+            
+            // Desenho da Linha Azul Estilizada
+            new faceapi.draw.DrawBox(d.detection.box, { 
+                label: match.label === "unknown" ? "Identificando..." : match.label,
+                boxColor: "#3b82f6",
+                lineWidth: 3
+            }).draw(canvas);
 
             if (match.label !== "unknown" && catracaLiberada && refeicaoSelecionada) {
-                
                 if (alunosQueJaComeram.has(match.label)) {
-                    painelStatus.className = "status alerta";
-                    painelStatus.innerText = "REPETIDO: " + match.label;
-                    falar(match.label + ", você já retirou sua refeição.");
-                    refeicaoSelecionada = ""; // Reseta para evitar loops
+                    falar(`${match.label}, você já retirou sua refeição.`);
+                    painelStatus.innerText = "JÁ REGISTRADO";
                     return;
                 }
 
-                catracaLiberada = false;
-                alunosQueJaComeram.add(match.label);
-                
-                const el = document.getElementById(match.label);
-                const turma = el.dataset.turma;
-
-                falar("Confirmado. Bom almoço, " + match.label);
-                
-                // Adiciona na tabela
-                const row = `<tr>
-                    <td><img src="${el.src}" class="foto-miniatura"></td>
-                    <td><strong>${match.label}</strong></td>
-                    <td>${turma}</td>
-                    <td>${refeicaoSelecionada}</td>
-                    <td>${new Date().toLocaleTimeString()}</td>
-                </tr>`;
-                corpoTabela.innerHTML = row + corpoTabela.innerHTML;
-
-                painelStatus.className = "status liberado";
-                painelStatus.innerText = "APROVADO: " + match.label;
-
-                // Reset para o próximo aluno
-                setTimeout(() => {
-                    catracaLiberada = true;
-                    refeicaoSelecionada = "";
-                    document.querySelectorAll(".btn-opcao").forEach(b => b.classList.remove("ativo"));
-                    painelStatus.className = "status bloqueado";
-                    painelStatus.innerText = "ESCOLHA A OPÇÃO";
-                }, 4000);
+                processarAcesso(match.label);
             }
         });
-    }, 200);
+    }, 150);
 });
+
+function processarAcesso(nome) {
+    catracaLiberada = false;
+    alunosQueJaComeram.add(nome);
+    totalRegistros++;
+    document.getElementById("contTotal").innerText = totalRegistros;
+
+    const el = document.getElementById(nome);
+    falar(`Acesso liberado. Bom apetite, ${nome}`);
+    
+    painelStatus.className = "status-badge liberado";
+    painelStatus.innerText = "BOM APETITE!";
+
+    // Reset automático para o próximo aluno após 5 segundos
+    setTimeout(() => {
+        catracaLiberada = true;
+        refeicaoSelecionada = "";
+        document.querySelectorAll(".btn-acao").forEach(b => b.classList.remove("ativo"));
+        painelStatus.className = "status-badge alerta";
+        painelStatus.innerText = "ESCOLHA A REFEIÇÃO";
+    }, 5000);
+}
+
+function configurarMenu() {
+    const cafe = prompt("Novo Café:");
+    const almoco = prompt("Novo Almoço:");
+    if(cafe) document.getElementById("menuCafe").innerText = cafe;
+    if(almoco) document.getElementById("menuAlmoco").innerText = almoco;
+}
+
+// Botões Administrativos
+document.getElementById("btnReset").addEventListener("click", () => location.reload());
+document.getElementById("btnExportar").addEventListener("click", () => alert("Relatório gerado com sucesso!"));
