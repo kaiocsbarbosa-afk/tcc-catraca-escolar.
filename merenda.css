@@ -104,14 +104,16 @@ button:hover { opacity: 0.9; transform: translateY(-2px); }
 
 #containerVideo {
     position: relative;
+    width: 100%;
     display: inline-block;
     background: #000;
     border-radius: 12px;
+    margin: 0 auto;
     overflow: hidden;
     line-height: 0;
 }
 
-canvas { position: absolute; top: 0; left: 0; }
+ canvas { position: absolute; top: 0; left: 0; width: 100%; heigh: 100%}
 
 /* TABELA DE HISTÓRICO */
 .historico-container {
