@@ -1,122 +1,42 @@
-:root {
-    --primaria: #3498db;
-    --sucesso: #2ecc71;
-    --perigo: #e74c3c;
-    --alerta: #f39c12;
-    --fundo: #f0f2f5;
-    --texto: #2c3e50;
-}
-
-body {
-    background-color: var(--fundo);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    display: flex;
-    justify-content: center;
-    padding: 20px;
-    color: var(--texto);
-}
-
-.painel-principal {
-    background: white;
-    max-width: 1000px;
-    width: 100%;
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    text-align: center;
-}
-
-/* Dashboard de Cards */
-.dashboard-contadores {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.card-contador {
-    flex: 1;
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 12px;
-    border-bottom: 4px solid var(--primaria);
-}
-
-.card-contador span {
-    font-size: 2rem;
-    font-weight: bold;
-    display: block;
-}
-
-/* Status IA */
-.status {
-    padding: 15px;
-    border-radius: 10px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    color: white;
-    transition: 0.3s;
-}
-
-.bloqueado { background: var(--perigo); }
-.liberado { background: var(--sucesso); }
-.alerta { background: var(--alerta); }
-
-/* Botoes de Refeição */
+/* Estilos do Painel de Escolha de Refeição */
 .painel-escolha {
-    background: #fdfdfd;
-    border: 2px dashed #ddd;
+    background-color: #f8f9fa;
     padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    border: 2px dashed #bdc3c7;
+}
+
+.painel-escolha h3 {
+    color: #34495e;
+    margin-bottom: 15px;
+    font-size: 1.1em;
 }
 
 .botoes-refeicao {
     display: flex;
-    gap: 10px;
-    margin-top: 10px;
+    justify-content: center;
+    gap: 15px;
 }
 
 .btn-opcao {
+    background-color: #ffffff;
+    color: #2c3e50;
+    border: 2px solid #bdc3c7;
+    font-size: 1.2em;
+    padding: 15px 25px;
     flex: 1;
-    padding: 12px;
-    border: 2px solid #eee;
-    background: white;
-    cursor: pointer;
-    font-weight: bold;
-    border-radius: 8px;
 }
 
+.btn-opcao:hover {
+    background-color: #ecf0f1;
+    transform: none;
+}
+
+/* Quando o botão é selecionado pelo aluno */
 .btn-opcao.ativo {
-    background: var(--primaria);
+    background-color: #3498db;
     color: white;
-    border-color: var(--primaria);
-}
-
-/* Video e Tabela */
-#containerVideo {
-    position: relative;
-    border-radius: 15px;
-    overflow: hidden;
-    background: #000;
-    margin: 20px 0;
-}
-
-canvas { position: absolute; top: 0; left: 0; }
-
-table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
-th, td { padding: 12px; border-bottom: 1px solid #eee; }
-
-.foto-miniatura {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--primaria);
-}
-
-.tag-sucesso {
-    background: #d4edda;
-    color: #155724;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
+    border-color: #2980b9;
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.4);
 }
